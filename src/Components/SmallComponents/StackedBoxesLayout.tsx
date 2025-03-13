@@ -1,7 +1,7 @@
 import * as React from 'react';
 import AspectRatio from '@mui/joy/AspectRatio';
 import Box from '@mui/joy/Box';
-import Container from '@mui/joy/Container';
+import Container from '@mui/material/Container';
 import Typography, { typographyClasses } from '@mui/joy/Typography';
 import { Grid } from '@mui/joy';
 
@@ -10,8 +10,8 @@ export default function StackedBoxesLayout({
 }: React.PropsWithChildren<{ reversed?: boolean }>) {
   return (
     <Container
-      sx={[
-        (theme) => ({
+      sx={{
+
           position: 'relative',
           minHeight: '100vh',
           display: 'flex',
@@ -19,8 +19,14 @@ export default function StackedBoxesLayout({
           py: 5,
           gap: 4,
           flexDirection: 'column',
-        }),
-      ]}
+          alignContent: 'center',
+          width: '100%',
+          "&.MuiContainer-maxWidthMd": {
+            maxWidth: "1600px",
+          },
+    
+      }}
+      maxWidth={'md'}
     > 
       <Typography
         level="h1"
@@ -31,7 +37,10 @@ export default function StackedBoxesLayout({
       >
         Advantages
       </Typography>
-    <Grid container flexGrow={1} justifyContent='space-between' alignItems={'stretch'} justifyItems={'stretch'} width={'100%'} gap={4}>
+    <Grid 
+      container flexGrow={1} justifyContent='space-between' alignItems={'stretch'} justifyItems={'stretch'} width={'100%'} gap={4}
+      
+    >
       {children}
     </Grid>
     </Container>

@@ -7,6 +7,8 @@ import ArrowForward from '@mui/icons-material/ArrowForward';
 import TwoSidedLayout from '../TwoSidedLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import {getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { GoogleSignInButton } from '../GoogleSignInButton';
 
 export default function HomePageBlock1() {
   return (
@@ -27,9 +29,7 @@ export default function HomePageBlock1() {
       >
         A free tool that allows you to generate karaoke tracks from any song.
       </Typography>
-      <Button size="lg" endDecorator={<ArrowForward className='text-xs' />}>
-        Get Started
-      </Button>
+      <GoogleSignInButton/>
       <Typography>
         Already a member? <Link sx={{ fontWeight: 'lg' }}>Sign in</Link>
       </Typography>

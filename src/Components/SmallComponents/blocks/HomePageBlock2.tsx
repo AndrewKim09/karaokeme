@@ -8,23 +8,24 @@ import TwoSidedLayout from '../TwoSidedLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import StackedBoxesLayout from '../StackedBoxesLayout';
-import { Grid } from '@mui/joy';
+import { Grid, useColorScheme } from '@mui/joy';
 
 export default function HomePageBlock2() {
+  const {mode, setMode} = useColorScheme();
   return (
     <StackedBoxesLayout>
       <Grid 
-        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'200px'}
+        xs={12} md={12} border={'2px solid'} borderColor={'primary.outlinedBorder'}  boxShadow={'md'} borderRadius={'md'} minHeight={'200px'} lg={5.5} xl={3.5}
+      >
+
+      </Grid>
+      <Grid 
+        xs={12} md={12} border={'2px solid'} borderColor={'primary.outlinedBorder'} boxShadow={'md'}  borderRadius={'md'} minHeight={'200px'} lg={5.5} xl={3.5}
       >
         awd
       </Grid>
       <Grid 
-        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'200px'}
-      >
-        awd
-      </Grid>
-      <Grid 
-        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'200px'}
+        xs={12} md={12} border={'2px solid'} borderColor={'primary.outlinedBorder'}  boxShadow={'md'} borderRadius={'md'} minHeight={'200px'} lg={12} xl={3.5}
       >
         awd
       </Grid>
