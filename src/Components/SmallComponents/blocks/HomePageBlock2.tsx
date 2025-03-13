@@ -14,17 +14,17 @@ export default function HomePageBlock2() {
   return (
     <StackedBoxesLayout>
       <Grid 
-        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'500px'}
+        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'200px'}
       >
         awd
       </Grid>
       <Grid 
-        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'500px'}
+        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'200px'}
       >
         awd
       </Grid>
       <Grid 
-        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'500px'}
+        xs={12} md={3.5} border={'1px solid black'} borderRadius={'md'} minHeight={'200px'}
       >
         awd
       </Grid>
