@@ -1,5 +1,16 @@
 import { extendTheme } from '@mui/joy/styles';
 import { inputClasses } from '@mui/joy/Input';
+import type { PaletteRange } from '@mui/joy/styles';
+
+declare module '@mui/joy/styles' {
+  interface ColorPalettePropOverrides {
+    info: true;
+  }
+
+  interface Palette {
+    info: PaletteRange;
+  }
+}
 
 export default extendTheme({
   colorSchemes: {
