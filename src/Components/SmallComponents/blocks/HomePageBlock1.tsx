@@ -1,14 +1,12 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import * as React from 'react';
-import Button from '@mui/joy/Button';
 import Link from '@mui/joy/Link';
 import Typography from '@mui/joy/Typography';
-import ArrowForward from '@mui/icons-material/ArrowForward';
 import TwoSidedLayout from '../TwoSidedLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
-import {getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { GoogleSignInButton } from '../GoogleSignInButton';
+import { Link as RouterLink } from 'react-router';
 
 export default function HomePageBlock1() {
   return (
@@ -31,7 +29,7 @@ export default function HomePageBlock1() {
       </Typography>
       <GoogleSignInButton/>
       <Typography>
-         <Link sx={{ fontWeight: 'lg' }}>Continue without Signing in</Link>
+         <Link sx={{ fontWeight: 'lg' }} component={RouterLink} to="/generate">Continue without Signing in</Link>
       </Typography>
     </TwoSidedLayout>
   );

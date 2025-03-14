@@ -7,6 +7,7 @@ import { ThemeToggleButton } from './Components/SmallComponents/ThemeToggleButto
 import { HomePage } from './Components/HomePage';
 import framesxTheme from './theme';
 import { Box } from '@mui/joy';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function Body(){
   const { mode, setMode } = useColorScheme();
@@ -22,7 +23,11 @@ function App() {
   return (
     <CssVarsProvider theme = {framesxTheme}>
       <InitColorSchemeScript/>
-      <Body/>
+      <BrowserRouter>
+        <Routes>
+          <Route index element={<Body/>}/>
+        </Routes>
+      </BrowserRouter>
     </CssVarsProvider>
   );
 }

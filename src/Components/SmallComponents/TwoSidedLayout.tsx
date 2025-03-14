@@ -16,8 +16,9 @@ export default function TwoSidedLayout({
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'center',
           py: 10,
-          gap: 4,
+          gap: 12,
           [theme.breakpoints.up(834)]: {
             flexDirection: 'row',
             gap: 6,

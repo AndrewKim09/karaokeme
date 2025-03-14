@@ -4,6 +4,7 @@ import Box from '@mui/joy/Box';
 import Container from '@mui/material/Container';
 import Typography, { typographyClasses } from '@mui/joy/Typography';
 import { Grid } from '@mui/joy';
+import theme from '../../theme';
 
 export default function StackedBoxesLayout({
   children,
@@ -38,7 +39,15 @@ export default function StackedBoxesLayout({
         Features
       </Typography>
     <Grid 
-      container flexGrow={1} justifyContent='space-between' alignItems={'stretch'} justifyItems={'stretch'} width={'100%'} height={'100%'} gap={4}
+      container  justifyContent='space-between' alignItems={'stretch'} justifyItems={'stretch'} width={'100%'} pb={'50px'} height={'1500px'} 
+      sx={(theme) => ({
+        alignItems: 'center',
+        [theme.breakpoints.up(430)]: {
+          height: '80%',
+          pb: 0,
+          gap: 10,
+        }
+      })}
     >
       {children}
     </Grid>
