@@ -27,11 +27,11 @@ export default function HomePageBlock1() {
         textColor="text.secondary"
         sx={{ fontSize: 'lg', lineHeight: 'lg' }}
       >
-        A free tool that allows you to generate karaoke tracks from any song.
+        A free tool to generate karaoke tracks from any song.
       </Typography>
       <GoogleSignInButton/>
       <Typography>
-        Already a member? <Link sx={{ fontWeight: 'lg' }}>Sign in</Link>
+         <Link sx={{ fontWeight: 'lg' }}>Continue without Signing in</Link>
       </Typography>
     </TwoSidedLayout>
   );

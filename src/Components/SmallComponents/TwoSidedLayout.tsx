@@ -41,7 +41,7 @@ export default function TwoSidedLayout({
           [theme.breakpoints.up(834)]: {
             minWidth: 420,
             alignItems: 'flex-start',
-            textAlign: 'initial',
+            textAlign: 'start',
           },
           [`& .${typographyClasses.root}`]: {
             textWrap: 'balance',

@@ -35,11 +35,10 @@ export default function StackedBoxesLayout({
           fontSize: 'clamp(1.875rem, 1.3636rem + 2.1818vw, 3rem)',
         }}
       >
-        Advantages
+        Features
       </Typography>
     <Grid 
-      container flexGrow={1} justifyContent='space-between' alignItems={'stretch'} justifyItems={'stretch'} width={'100%'} gap={4}
-      
+      container flexGrow={1} justifyContent='space-between' alignItems={'stretch'} justifyItems={'stretch'} width={'100%'} height={'100%'} gap={4}
     >
       {children}
     </Grid>
