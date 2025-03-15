@@ -8,26 +8,22 @@ import { HomePage } from './Components/HomePage';
 import framesxTheme from './theme';
 import { Box } from '@mui/joy';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { GeneratePage } from './Components/GeneratePage';
 
-function Body(){
-  const { mode, setMode } = useColorScheme();
-  return(
-    <Box className="App" bgcolor={'background.body'}>
-      <ThemeToggleButton/>
-      <HomePage/>
-    </Box>
-  )
-}
 
 function App() {
   return (
     <CssVarsProvider theme = {framesxTheme}>
       <InitColorSchemeScript/>
-      <BrowserRouter>
-        <Routes>
-          <Route index element={<Body/>}/>
-        </Routes>
-      </BrowserRouter>
+      <Box className="App" bgcolor={'background.body'}>
+        <ThemeToggleButton/>
+        <BrowserRouter>
+          <Routes>
+            <Route index element={<HomePage/>}/>
+            <Route path="/generate" element={<GeneratePage/>}/>
+          </Routes>
+        </BrowserRouter>
+      </Box>
     </CssVarsProvider>
   );
 }

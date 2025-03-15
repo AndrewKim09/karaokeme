@@ -25,6 +25,9 @@ export default function StackedBoxesLayout({
           "&.MuiContainer-maxWidthMd": {
             maxWidth: "1600px",
           },
+          [theme.breakpoints.up(1536)]: {
+            justifyContent: 'center',
+          }
     
       }}
       maxWidth={'md'}
@@ -46,6 +49,9 @@ export default function StackedBoxesLayout({
           height: '80%',
           pb: 0,
           gap: 10,
+        },
+        [theme.breakpoints.up(1536)]: {
+          justifyContent: 'center',
         }
       })}
     >
