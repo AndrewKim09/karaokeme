@@ -1,7 +1,9 @@
+
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Box, Dropdown, Link, MenuButton, Modal, Typography } from '@mui/joy'
+import { Box, Dropdown, Link, MenuButton, Modal, Typography, useTheme } from '@mui/joy'
 import React, { useEffect, useRef, useState } from 'react'
+import { TermsAndService } from './SmallComponents/TermsAndService'
 
 export const GeneratePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,23 +99,23 @@ export const GeneratePage = () => {
 
       <Modal open={openModal} onClose={handleClose}>
         <Box
-          sx={{
+          sx={(theme) => ({
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 300,
-            bgcolor: 'background.paper',
+            width: '80vw',
+            bgcolor: theme.palette.background.level1,
             padding: 2,
             boxShadow: 24,
             borderRadius: 1,
-          }}
+            overflow: 'scroll',
+            height: '80vh',
+          })}
         >
-          <Typography level='h4' component="h2">
-            This is a modal!
-          </Typography>
-          <Link component="button" onClick={handleClose} style={{ cursor: 'pointer', color: 'red', marginTop: 20 }}>
-            Close Modal
+          <TermsAndService/>
+          <Link component="button" onClick={handleClose} style={{ cursor: 'pointer', color: 'red', marginTop: 20 }} >
+            Close
           </Link>
         </Box>
       </Modal>
