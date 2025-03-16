@@ -1,17 +1,67 @@
 
-import { faMicrophone } from '@fortawesome/free-solid-svg-icons'
+import { faExclamation, faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Box, Dropdown, Link, MenuButton, Modal, Typography, useTheme } from '@mui/joy'
+import { Alert, Box, Button, Dropdown, Link, MenuButton, Modal, Typography, useTheme } from '@mui/joy'
 import React, { useEffect, useRef, useState } from 'react'
 import { TermsAndService } from './SmallComponents/TermsAndService'
+import { Tracks } from './SmallComponents/Tracks'
+import { ElevatorSharp } from '@mui/icons-material'
+import gsap from 'gsap'
 
 export const GeneratePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wrongFileNotificationRef = useRef<HTMLDivElement>(null);
   const [openModal, setOpenModal] = useState(false);
+  const [tracks, setTracks] = useState<File[]>([]);
 
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
 
+  async function uploadFile(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    console.log("Uploading file:", file.name);
+
+    const response = await fetch("http://localhost:5000/separate", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    console.log(result);
+  }
+
+  const checkFileType = (file: File) => {
+    console.log("Dropped file:", file.name);
+    if (file.type !== 'audio/mpeg') {
+      showWrongFileNotification();
+      console.log('Please upload an audio file');
+      return;
+    } else {
+      uploadFile(file);
+    }
+  }
+
+  const closeWrongFileNotification = () => {
+    gsap.to(wrongFileNotificationRef.current, {
+      opacity: 0,
+      transform: 'translateY(-20px)',
+      duration: 0.1
+    }
+    )
+  }
+
+  const showWrongFileNotification = () => {
+    gsap.fromTo(wrongFileNotificationRef.current, {
+      opacity: 0,
+      transform: 'translateY(-20px)',
+      visibility: 'visible'
+    }, {
+      opacity: 1,
+      transform: 'translateY(0)',
+      duration: 0.5
+    });
+  }
 
   useEffect(() => {
     const dropArea = document.getElementById('dropArea');
@@ -29,20 +79,14 @@ export const GeneratePage = () => {
         event.preventDefault();
         dropArea.classList.remove('dragover');
         const file = event.dataTransfer?.files?.[0];
-        if (file) {
-          console.log("Dropped file:", file.name);
-          if(file.type !== 'audio/mpeg') {
-            console.log('Please upload an audio file');
-            return;
-          }
-          // You can handle file upload logic here
-        }
+        if (file) checkFileType(file);
       });
     }
   }, []);
 
   const handleFileSelect = () => {
     if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset the input
       fileInputRef.current.click(); // Opens file picker
     }
   };
@@ -51,27 +95,42 @@ export const GeneratePage = () => {
     const file = event.target.files?.[0]; // Get the selected file
     if (file) {
       console.log("Selected file:", file.name);
-      // You can handle file upload logic here
+      checkFileType(file);
     }
   };
+
   return (
     <Box display='flex' flexDirection={'column'} alignItems={'center'}>
-      <Typography level='h1' marginTop={'50px'}>Generate <FontAwesomeIcon className='text-yellow-300' icon={faMicrophone}/></Typography>
+      <Alert
+        ref={wrongFileNotificationRef}
+        color='danger'
+        startDecorator={<FontAwesomeIcon icon={faExclamationCircle} />}
+        endDecorator={<button onClick={() => closeWrongFileNotification()}><FontAwesomeIcon color='gray' icon={faX} /></button>}
+        sx={(theme) => ({
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          opacity: 0,
+        })}
+      >
+        Please upload an audio file
+      </Alert>
+      <Typography level='h1' marginTop={'50px'}>Generate <FontAwesomeIcon className='text-yellow-300' icon={faMicrophone} /></Typography>
 
-      <Box 
-        display='flex' 
-        flexDirection='column' 
-        alignItems='center' 
-        justifyContent='center' 
-        border={'2px dashed'} 
-        borderColor={'neutral.plainColor'} 
+      <Box
+        display='flex'
+        flexDirection='column'
+        alignItems='center'
+        justifyContent='center'
+        border={'2px dashed'}
+        borderColor={'neutral.plainColor'}
         p={4} marginTop={4} minWidth={'300px'}
-        width={'fit-content'} 
+        width={'fit-content'}
         borderRadius={'md'}
         id='dropArea'
       >
         <Dropdown >
-          <MenuButton 
+          <MenuButton
             sx={(theme) => ({
               backgroundColor: theme.palette.primary.outlinedActiveBg,
               color: theme.palette.primary.softColor,
@@ -80,7 +139,7 @@ export const GeneratePage = () => {
                 color: theme.palette.success.solidDisabledBg,
               }
             })}
-            onClick={handleFileSelect}
+            onClick={() => handleFileSelect()}
           >Upload a file
           </MenuButton>
         </Dropdown>
@@ -95,8 +154,10 @@ export const GeneratePage = () => {
           onChange={handleFileChange}
         />
       </Box>
-      <Typography level='body-xs' marginTop={'10px'}>By uploading a file you agree to these <Link onClick={handleOpen}>Terms And Conditions </Link></Typography>
 
+      <Tracks tracks={tracks} />
+
+      <Typography level='body-xs' marginTop={'10px'}>By uploading a file you agree to these <Link onClick={handleOpen}>Terms And Conditions </Link></Typography>
       <Modal open={openModal} onClose={handleClose}>
         <Box
           sx={(theme) => ({
@@ -113,12 +174,12 @@ export const GeneratePage = () => {
             height: '80vh',
           })}
         >
-          <TermsAndService/>
+          <TermsAndService />
           <Link component="button" onClick={handleClose} style={{ cursor: 'pointer', color: 'red', marginTop: 20 }} >
             Close
           </Link>
         </Box>
       </Modal>
     </Box>
-  )
-}
+  );
+};
