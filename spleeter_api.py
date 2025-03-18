@@ -26,6 +26,7 @@ def separate_audio():
     filename = secure_filename(file.filename)
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
+    base_url = request.host_url.rstrip('/')
 
     output_path = os.path.join(OUTPUT_FOLDER, os.path.splitext(filename)[0])
 
@@ -51,12 +52,18 @@ def separate_audio():
     vocal_path = os.path.join(output_path, "vocals.wav")
     instrumental_path = os.path.join(output_path, "accompaniment.wav")
 
+    vocal_path = os.path.abspath(vocal_path)
+    instrumental_path = os.path.abspath(instrumental_path)
+
+    print("Vocal Path:", vocal_path)
+    print("Instrumental Path:", instrumental_path)
+
     if not os.path.exists(vocal_path) or not os.path.exists(instrumental_path):
         return jsonify({"error": "Separation failed"}), 500
 
     return jsonify({
-        "vocals": f"/download/{os.path.basename(output_path)}/vocals.wav",
-        "instrumental": f"/download/{os.path.basename(output_path)}/accompaniment.wav"
+        "vocals": f"{base_url}/download/{os.path.basename(output_path)}/vocals.wav",
+        "instrumental": f"{base_url}/download/{os.path.basename(output_path)}/accompaniment.wav"
     })
 
 @app.route("/download/<path:filename>", methods=["GET"])

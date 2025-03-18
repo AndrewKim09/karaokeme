@@ -1,21 +1,34 @@
 
-import { faExclamation, faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
+import { faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Alert, Box, Button, Dropdown, Link, MenuButton, Modal, Typography, useTheme } from '@mui/joy'
+import { Alert, Box, CircularProgress, Dropdown, Link, MenuButton, Modal, Typography} from '@mui/joy'
 import React, { useEffect, useRef, useState } from 'react'
 import { TermsAndService } from './SmallComponents/TermsAndService'
 import { Tracks } from './SmallComponents/Tracks'
-import { ElevatorSharp } from '@mui/icons-material'
 import gsap from 'gsap'
+import WaveformPlayer from './SmallComponents/WaveformPlayer'
 
 export const GeneratePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const wrongFileNotificationRef = useRef<HTMLDivElement>(null);
   const [openModal, setOpenModal] = useState(false);
   const [tracks, setTracks] = useState<File[]>([]);
+  const [processing, setProcessing] = useState(false);
+
+  const [accompaniment, setAccompaniment] = useState<string | null>(null);
+  const [vocals, setVocals] = useState<string | null>(null);
 
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setAccompaniment(`${window.location.origin}/accompaniment.wav`);
+      setVocals(`${window.location.origin}/vocals.wav`);
+    };
+    fetchData().then(() => console.log("Data fetched"));
+  }, []);
+
 
   async function uploadFile(file: File) {
     const formData = new FormData();
@@ -25,10 +38,14 @@ export const GeneratePage = () => {
     const response = await fetch("http://localhost:5000/separate", {
       method: "POST",
       body: formData,
-    });
+    }).finally(() => setProcessing(false))
+    ;
 
-    const result = await response.json();
-    console.log(result);
+    const result = await response.json().then(async (data) => {
+      console.log(data);
+      setAccompaniment(data.instrumental);
+      setVocals(data.vocals);
+    })
   }
 
   const checkFileType = (file: File) => {
@@ -129,6 +146,7 @@ export const GeneratePage = () => {
         borderRadius={'md'}
         id='dropArea'
       >
+        {!processing && <>
         <Dropdown >
           <MenuButton
             sx={(theme) => ({
@@ -145,15 +163,26 @@ export const GeneratePage = () => {
         </Dropdown>
         <Typography level='body-xs' marginTop={'10px'}>Optionally drag the file into the box</Typography>
         <Typography level='body-xs' marginTop={'10px'}>Supported file types: mp3</Typography>
-
-        {/* Hidden file input */}
+        
         <input
           type="file"
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
-        />
-      </Box>
+        /> 
+        </>}
+
+        {processing && 
+          <Typography
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'center',
+            })}
+          >
+            <CircularProgress sx={{marginRight: '20px'}}/> Generating Track
+          </Typography>
+        }
+        </Box>
 
       <Tracks tracks={tracks} />
 
@@ -180,6 +209,11 @@ export const GeneratePage = () => {
           </Link>
         </Box>
       </Modal>
+
+      <img src='./tet.jpg'/>
+
+      {accompaniment && <WaveformPlayer file={accompaniment} />}
+      {vocals && <WaveformPlayer file={vocals} />}
     </Box>
   );
 };

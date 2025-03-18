@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { CssVarsProvider, useColorScheme, extendTheme } from '@mui/joy/styles';
+import { CssVarsProvider, useColorScheme, extendTheme, ThemeProvider } from '@mui/joy/styles';
 import './App.css';
 import InitColorSchemeScript from '@mui/joy/InitColorSchemeScript';
 import { ThemeToggleButton } from './Components/SmallComponents/ThemeToggleButton';
