@@ -16,7 +16,7 @@ export const GeneratePage = () => {
   const [processing, setProcessing] = useState(false);
 
   const [accompaniment, setAccompaniment] = useState<string | null>(null);
-  const [vocals, setVocals] = useState<string | null>(null);
+  const [vocal, setVocal] = useState<string | null>(null);
 
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
@@ -24,7 +24,7 @@ export const GeneratePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       setAccompaniment(`${window.location.origin}/accompaniment.wav`);
-      setVocals(`${window.location.origin}/vocals.wav`);
+      setVocal(`${window.location.origin}/vocals.wav`);
     };
     fetchData().then(() => console.log("Data fetched"));
   }, []);
@@ -44,7 +44,7 @@ export const GeneratePage = () => {
     const result = await response.json().then(async (data) => {
       console.log(data);
       setAccompaniment(data.instrumental);
-      setVocals(data.vocals);
+      setVocal(data.vocals);
     })
   }
 
@@ -210,10 +210,7 @@ export const GeneratePage = () => {
         </Box>
       </Modal>
 
-      <img src='./tet.jpg'/>
-
-      {accompaniment && <WaveformPlayer file={accompaniment} />}
-      {vocals && <WaveformPlayer file={vocals} />}
+      {(accompaniment && vocal) && <WaveformPlayer instrumentalFile={accompaniment} vocalFile={vocal} />}
     </Box>
   );
 };

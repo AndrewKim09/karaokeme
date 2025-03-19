@@ -20,7 +20,5 @@ const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );

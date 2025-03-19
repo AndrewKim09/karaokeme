@@ -14,3 +14,9 @@
   opacity: 60%;
   border-color: #000;
 }
+
+.audio-slider{
+  writing-mode: vertical-rl;
+  direction: rtl;
+  height: 100%;
+}
