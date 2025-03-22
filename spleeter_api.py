@@ -1,16 +1,39 @@
+import wave
 from flask import Flask, request, jsonify, send_file
 import os
 import subprocess
+import numpy as np
 from werkzeug.utils import secure_filename  # type: ignore
 from flask_cors import CORS  # Import CORS
 import ffmpeg
 import whisper
-import openai
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+import torch
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "output"
-model = whisper.load_model("small")
+
+# device = "cuda:0" if torch.cuda.is_available() else "cpu"
+# torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+# model_id = "openai/whisper-large-v3-turbo"
+model = whisper.load_model("medium")
+
+# model = AutoModelForSpeechSeq2Seq.from_pretrained(
+#     model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+# )
+# model.to(device)
+
+# processor = AutoProcessor.from_pretrained(model_id)
+
+# pipe = pipeline(
+#     "automatic-speech-recognition",
+#     model=model,
+#     tokenizer=processor.tokenizer,
+#     feature_extractor=processor.feature_extractor,
+#     torch_dtype=torch_dtype,
+#     device=device,
+# )
 
 output_vocal_file = 'converted_audio.wav'
 
@@ -27,22 +50,23 @@ def convert_audio(input_path, output_path):
 
 def get_lyrics(input_path):
     try:
-        result = model.transcribe(input_path)
-        print("Transcription:", result)
+        audio = whisper.load_audio(input_path)
+
+        result = whisper.transcribe(model, audio)
         return result
     except Exception as e:
         print("Error during audio processing:", str(e))
         return jsonify({"error": "Audio processing failed", "details": str(e)}), 500
     
-def clean_lyrics(lyrics):
-    prompt = f"Clean the following lyrics:\n\n{lyrics}\n\nCleaned lyrics:"
-    response = openai.responses.create(
-    model="gpt-4o",
-    instructions="You are a music fanatic, clean the lyrics by identifying the song and cleaning the lyrics.",
-    input=prompt
-    ) 
-    print(response.output[0].content[0].text)
-    return response.output[0].content[0].text
+# def clean_lyrics(lyrics):
+#     prompt = f"Clean the following lyrics:\n\n{lyrics}\n\nCleaned lyrics:"
+#     response = openai.responses.create(
+#     model="gpt-4o",
+#     instructions="You are a music fanatic, clean the lyrics by replacing lines with the correct lines",
+#     input=prompt
+#     ) 
+#     print(response.output[0].content[0].text)
+#     return response.output[0].content[0].text
 
 
 @app.route("/separate", methods=["POST"])
@@ -92,18 +116,20 @@ def separate_audio():
     convert_audio(vocal_path, f"{output_path}/vocals_converted.wav")
     raw_lyrics = get_lyrics(f"{output_path}/vocals_converted.wav")
 
-    if isinstance(raw_lyrics, dict) and "text" in raw_lyrics:
-        lyrics = clean_lyrics(raw_lyrics["text"])
-    else:
-        lyrics = "Lyrics not found"
+    # if isinstance(raw_lyrics, dict) and "text" in raw_lyrics:
+    #     lyrics = clean_lyrics(raw_lyrics["text"])
+    # else:
+    #     lyrics = "Lyrics not found"
 
     if not os.path.exists(vocal_path) or not os.path.exists(instrumental_path):
         return jsonify({"error": "Separation failed"}), 500
+    
+    filtered_lyrics_object = [{"start": seg["start"], "end": seg["end"], "text": seg["text"]} for seg in raw_lyrics["segments"]]
 
     return jsonify({
         "vocals": f"{base_url}/download/{os.path.basename(output_path)}/vocals.wav",
         "instrumental": f"{base_url}/download/{os.path.basename(output_path)}/accompaniment.wav",
-        "lyrics": lyrics
+        "lyrics": filtered_lyrics_object
     })
 
 @app.route("/download/<path:filename>", methods=["GET"])
