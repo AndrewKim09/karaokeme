@@ -3,16 +3,47 @@ import os
 import subprocess
 from werkzeug.utils import secure_filename  # type: ignore
 from flask_cors import CORS  # Import CORS
+import ffmpeg
+import whisper
+import openai
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "output"
+model = whisper.load_model("small")
+
+output_vocal_file = 'converted_audio.wav'
 
 CORS(app)  # Enable CORS
 
 # Ensure folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+def convert_audio(input_path, output_path):
+    ffmpeg.input(input_path)\
+    .output(output_path, ar='16000', ac=1, c='pcm_s16le')\
+    .run()
+
+def get_lyrics(input_path):
+    try:
+        result = model.transcribe(input_path)
+        print("Transcription:", result)
+        return result
+    except Exception as e:
+        print("Error during audio processing:", str(e))
+        return jsonify({"error": "Audio processing failed", "details": str(e)}), 500
+    
+def clean_lyrics(lyrics):
+    prompt = f"Clean the following lyrics:\n\n{lyrics}\n\nCleaned lyrics:"
+    response = openai.responses.create(
+    model="gpt-4o",
+    instructions="You are a music fanatic, clean the lyrics by identifying the song and cleaning the lyrics.",
+    input=prompt
+    ) 
+    print(response.output[0].content[0].text)
+    return response.output[0].content[0].text
+
 
 @app.route("/separate", methods=["POST"])
 def separate_audio():
@@ -58,12 +89,21 @@ def separate_audio():
     print("Vocal Path:", vocal_path)
     print("Instrumental Path:", instrumental_path)
 
+    convert_audio(vocal_path, f"{output_path}/vocals_converted.wav")
+    raw_lyrics = get_lyrics(f"{output_path}/vocals_converted.wav")
+
+    if isinstance(raw_lyrics, dict) and "text" in raw_lyrics:
+        lyrics = clean_lyrics(raw_lyrics["text"])
+    else:
+        lyrics = "Lyrics not found"
+
     if not os.path.exists(vocal_path) or not os.path.exists(instrumental_path):
         return jsonify({"error": "Separation failed"}), 500
 
     return jsonify({
         "vocals": f"{base_url}/download/{os.path.basename(output_path)}/vocals.wav",
-        "instrumental": f"{base_url}/download/{os.path.basename(output_path)}/accompaniment.wav"
+        "instrumental": f"{base_url}/download/{os.path.basename(output_path)}/accompaniment.wav",
+        "lyrics": lyrics
     })
 
 @app.route("/download/<path:filename>", methods=["GET"])

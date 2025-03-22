@@ -6,6 +6,7 @@ import {Box} from "@mui/joy";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPause, faPlay, faVolumeDown, faVolumeHigh, faVolumeMute, faVolumeOff } from "@fortawesome/free-solid-svg-icons";
 import { FormatListNumbered } from "@mui/icons-material";
+import theme from "../../theme";
 
 interface WaveformPlayerProps {
   vocalFile: string;
@@ -194,8 +195,12 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
     <Box sx={{ textAlign: "center", width: 'fit-content'}}>
 
       {/* Waveform Display */}
+      <div className="flex items-center justify-center gap-2">
+        <Typography variant='h4' sx={{ textAlign: 'center' }}>Vocals:</Typography>
+        <span className="text-xs">Volume: {Math.round(vocalVolume * 100)}%</span>
+      </div>
       <div className="flex items-center w-[50vw]">
-        <div className="flex flex-col controls h-[120px] mt-4">
+        <div className="flex flex-col controls h-[120px] mt-4 mr-4">
           <input
             className="audio-slider"
             type='range'
@@ -215,12 +220,13 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         <div id='vocalWaveform' ref={vocalWaveformRef} style={{ width: '100%'}} onClick={() => {handleVocalTimeChange()}}/>
       </div>
 
-        <div className="audio-info">
-          <span>Volume: {Math.round(vocalVolume * 100)}%</span>
-        </div>
+      <div className="flex items-center justify-center gap-2">
+        <Typography variant='h4' sx={{ textAlign: 'center'}}>Instrumentals</Typography>
+        <span className="text-xs">Volume: {Math.round(vocalVolume * 100)}%</span>
+      </div>
 
       <div className="flex items-center">  
-        <div className="flex flex-col controls h-[120px] mt-4">
+        <div className="flex flex-col controls h-[120px] mt-4 mr-4">
           <input
             className="audio-slider"
             type='range'
@@ -248,9 +254,20 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       </span>
 
 
-      <button onClick={handlePlayPause} className="h-10 text-xl aspect-square">
+      <Button 
+        onClick={handlePlayPause} 
+        className="h-10 text-xl aspect-square"
+        sx={(theme) => ({
+          backgroundColor: theme.palette.primary.outlinedActiveBg,
+          color: theme.palette.primary.softColor,
+          '&:hover': {
+            backgroundColor: theme.palette.primary.outlinedColor,
+            color: theme.palette.success.solidDisabledBg,
+          }
+        })}
+      >
           <FontAwesomeIcon icon={playing ? faPause : faPlay} />
-      </button>
+      </Button>
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />
     </Box>
