@@ -46,7 +46,7 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 def convert_audio(input_path, output_path):
     ffmpeg.input(input_path)\
     .output(output_path, ar='16000', ac=1, c='pcm_s16le')\
-    .run()
+    .run(overwrite_output=True)
 
 def get_lyrics(input_path):
     try:
