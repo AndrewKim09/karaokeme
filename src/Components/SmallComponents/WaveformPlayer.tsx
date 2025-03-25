@@ -80,6 +80,11 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [loaded, setLoaded] = useState(false);
+
+  const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([]);
+
+  const [vocalOutput, setVocalOutput] = useState<string | null>(null);
+  const [instrumentalOutput, setInstrumentalOutput] = useState<string | null>(null);
   
 
   useEffect(() => {
@@ -137,6 +142,27 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       }
     };
   }, [instrumentalFile, vocalFile]);
+
+  useEffect(() => {
+    requestPermissions();
+  }, [])
+
+  const requestPermissions = async () => {
+    try {
+      // Request access to any available audio input (e.g., microphone)
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+  
+      // Now we can list the audio output devices
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioOutputs = devices.filter(device => device.kind === "audiooutput");
+
+      setOutputDevices(audioOutputs);
+  
+      console.log("Available audio output devices:", audioOutputs);
+    } catch (error) {
+      console.error("Permission denied or error accessing media devices", error);
+    }
+  };
 
   const handlePlayPause = () => {
     if(!vocalWaveSurfer.current || !instrumentalWaveSurfer.current || !vocalAudioRef.current || !instrumentalAudioRef.current) return;
@@ -207,6 +233,24 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
     instrumentalAudioRef.current.currentTime = time;
     setCurrentTime(time);
   }
+
+  const changeAudioOutput = (element: HTMLAudioElement, deviceId: string | null) => {
+    if (element && deviceId && "setSinkId" in element) {
+      (element as any).setSinkId(deviceId).then(() => {
+        console.log(`Audio output changed to ${deviceId}`);
+      }).catch((err: any) => console.error("Error changing output device:", err));
+    }
+  };
+
+  useEffect(() => {
+    if (vocalAudioRef.current) {
+      changeAudioOutput(vocalAudioRef.current, vocalOutput);
+    }
+    if (instrumentalAudioRef.current) {
+      changeAudioOutput(instrumentalAudioRef.current, instrumentalOutput);
+    }
+  }, [vocalOutput, instrumentalOutput]);
+  
 
   return (
     <Box sx={{ textAlign: "center", width: 'fit-content', }}>
@@ -287,6 +331,20 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />
+
+      <label className="mr-2 font-bold">Vocal Output:</label>
+      <select onChange={(e) => setVocalOutput(e.target.value)} className="w-20">
+        {outputDevices.map((device) => (
+          <option key={device.deviceId} value={device.deviceId}>{device.label}</option>
+        ))}
+      </select>
+
+      <label className="mr-2 font-bold">Instrumental Output:</label>
+      <select onChange={(e) => setInstrumentalOutput(e.target.value)} className="w-20">
+        {outputDevices.map((device) => (
+          <option key={device.deviceId} value={device.deviceId}>{device.label}</option>
+        ))}
+      </select>
     </Box>
   );
 };
