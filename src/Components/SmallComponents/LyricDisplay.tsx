@@ -11,16 +11,16 @@ type Segment = {
 type LyricDisplayProps = {
   lyrics: Segment[];
   time: number;
+  setTime: (time: number) => void;
 };
 
-export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time}) => {
+export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time, setTime}) => {
   const lyricsContainerRef = React.useRef<HTMLDivElement>(null);
-  const [currentTime, setCurrentTime] = useState(time);
 
 
   // Find the current lyric line based on time
   const currentLineIndex = lyrics.findIndex(
-    (line) => time >= line.start && time <= line.end
+    (line) => (time + .25) >= line.start && (time + .25) <= line.end
   );
 
   useEffect(() => {
@@ -31,6 +31,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time}) => {
       }
     }
   }, [currentLineIndex]);
+
 
 
   return (
@@ -55,7 +56,12 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time}) => {
               fontSize: "25px",
               fontWeight: currentLineIndex === index ? "bold" : "normal",
               color: currentLineIndex === index ? theme.palette.primary.plainColor : theme.palette.text.primary,
+              cursor: "pointer",
+              ":hover": {
+                opacity: .7
+              }
             })}
+            onClick={() => setTime(line.start)}
           >
             {line.text}
           </Typography>

@@ -199,10 +199,19 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
     setCurrentTime(newTime);
   }
 
+  const setTime = (time: number) => {
+    if(!vocalWaveSurfer.current || !vocalAudioRef.current || !instrumentalAudioRef.current || !instrumentalWaveSurfer.current) return;
+    vocalWaveSurfer.current.seekTo(time / duration);
+    instrumentalWaveSurfer.current.seekTo(time / duration);
+    vocalAudioRef.current.currentTime = time;
+    instrumentalAudioRef.current.currentTime = time;
+    setCurrentTime(time);
+  }
+
   return (
     <Box sx={{ textAlign: "center", width: 'fit-content', }}>
 
-      <LyricDisplay lyrics={lyrics} time={currentTime} />
+      <LyricDisplay lyrics={lyrics} time={currentTime} setTime={setTime}/>
 
       <Button 
         onClick={handlePlayPause} 
