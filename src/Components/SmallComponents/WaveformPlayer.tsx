@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
-import { Typography } from "@mui/material";
+import { Option, Select, Typography } from "@mui/joy";
 import { Button } from "@mui/joy";
 import {Box} from "@mui/joy";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,6 +8,7 @@ import { faPause, faPlay, faVolumeDown, faVolumeHigh, faVolumeMute, faVolumeOff 
 import { FormatListNumbered } from "@mui/icons-material";
 import theme from "../../theme";
 import { LyricDisplay } from "./LyricDisplay";
+import WaveformRecorder from "./WaveformRecorder";
 
 interface WaveformPlayerProps {
   vocalFile: string;
@@ -39,7 +40,7 @@ const vocalFormWaveSurferOptions = (ref: HTMLElement) => ({
   barGap: 3
 })
 
-const instrumentalWaveSurgerOption = (ref: HTMLElement) => ({
+const instrumentalWaveSurferOption = (ref: HTMLElement) => ({
   container: ref,
   waveColor: '#ccc',
   backgroundColor: '#020',
@@ -52,6 +53,21 @@ const instrumentalWaveSurgerOption = (ref: HTMLElement) => ({
   barWidth: 2,
   barGap: 3
 })
+
+const recordingWaveSurferOption = (ref: HTMLElement) => ({
+  container: ref,
+  waveColor: '#ccc',
+  backgroundColor: '#020',
+  progressColor: '#db0400',
+  cursorColor: 'transparent',
+  response: true,
+  height: 40,
+  normalize: true,
+  backend: "WebAudio" as "WebAudio", // Explicitly type the backend
+  barWidth: 2,
+  barGap: 3
+})
+
 
 const formatTime = (seconds: number) => {
   let date = new Date(0)
@@ -103,7 +119,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
     if(!vocalWaveformRef.current || !instrumentalWaveformRef.current) return;
     const vocalOptions = vocalFormWaveSurferOptions(vocalWaveformRef.current);
-    const instrumentalOptions = instrumentalWaveSurgerOption(instrumentalWaveformRef.current);
+    const instrumentalOptions = instrumentalWaveSurferOption(instrumentalWaveformRef.current);
 
     vocalWaveSurfer.current = WaveSurfer.create(vocalOptions);
     instrumentalWaveSurfer.current = WaveSurfer.create(instrumentalOptions);
@@ -276,8 +292,8 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
       {/* Waveform Display */}
       <div className="flex items-center justify-center gap-2">
-        <Typography variant='h4' sx={{ textAlign: 'center' }}>Vocals:</Typography>
-        <span className="text-xs">Volume: {Math.round(vocalVolume * 100)}%</span>
+        <Typography level='h4' sx={{ textAlign: 'center' }}>Vocals:</Typography>
+        <Typography level="body-xs">Volume: {Math.round(vocalVolume * 100)}%</Typography>
       </div>
       <div className="flex items-center w-[100%] h-[70px]">
         <div className="flex flex-col controls h-[100%] mt-4 mr-4">
@@ -301,8 +317,8 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <Typography variant='h4' sx={{ textAlign: 'center'}}>Instrumentals</Typography>
-        <span className="text-xs">Volume: {Math.round(vocalVolume * 100)}%</span>
+        <Typography level='h4' sx={{ textAlign: 'center'}}>Instrumentals</Typography>
+        <Typography level="body-xs">Volume: {Math.round(instrumentalVolume * 100)}%</Typography>
       </div>
 
       <div className="flex items-center w-[100%] h-[70px]">  
@@ -325,6 +341,8 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           <div id='instrumentalWaveform' ref={instrumentalWaveformRef} style={{ width: '100%'}} onClick={() => {handleInstrumentalTimeChange()}}/>
       </div>
 
+      {<WaveformRecorder setTime={setTime} handlePlayPause={handlePlayPause}/>}
+
       <span>
         {formatTime(currentTime)} <br/>
       </span>
@@ -332,19 +350,34 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />
 
-      <label className="mr-2 font-bold">Vocal Output:</label>
-      <select onChange={(e) => setVocalOutput(e.target.value)} className="w-20">
-        {outputDevices.map((device) => (
-          <option key={device.deviceId} value={device.deviceId}>{device.label}</option>
-        ))}
-      </select>
+      <div className="flex items-center justify-center gap-2">
+        <Typography 
+          className="font-bold" 
+          textColor="text.secondary"
+          display={"inline"}
+        >
+          Vocal Output:
+        </Typography>
+        <Select onChange={(e, value : string | null) => setVocalOutput(value)} className="w-20 cursor-pointer">
+          {outputDevices.map((device) => (
+            <Option key={device.deviceId} value={device.deviceId}>{device.label}</Option>
+          ))}
+        </Select>
+        
+        <Typography 
+          className="font-bold"
+          textColor={"text.secondary"}
+          display={"inline"}
+        >
+          Instrumental Output:
+        </Typography>
+        <Select onChange={(e, value: string | null) => setInstrumentalOutput(value)} className="w-20 cursor-pointer">
+          {outputDevices.map((device) => (
+            <Option key={device.deviceId} value={device.deviceId} >{device.label}</Option>
+          ))}
+        </Select>
+      </div>
 
-      <label className="mr-2 font-bold">Instrumental Output:</label>
-      <select onChange={(e) => setInstrumentalOutput(e.target.value)} className="w-20">
-        {outputDevices.map((device) => (
-          <option key={device.deviceId} value={device.deviceId}>{device.label}</option>
-        ))}
-      </select>
     </Box>
   );
 };

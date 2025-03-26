@@ -313,7 +313,7 @@ export const GeneratePage = () => {
   };
 
   return (
-    <Box display='flex' flexDirection={'column'} alignItems={'center'} height={'100vh'}>
+    <Box display='flex' flexDirection={'column'} alignItems={'center'} minHeight={'100vh'} height={'fit-content'}>
       <Alert
         ref={wrongFileNotificationRef}
         color='danger'
