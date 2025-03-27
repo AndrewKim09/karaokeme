@@ -173,18 +173,31 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   };
 
   const handlePlayPause = () => {
+    
+    if(playing){
+      handlePause();
+    }
+    else {
+      handlePlay();
+    }
+  }
+
+  const handlePlay = () => {
     if(!vocalWaveSurfer.current || !instrumentalWaveSurfer.current || !vocalAudioRef.current || !instrumentalAudioRef.current) return;
-    vocalWaveSurfer.current.playPause();
-    instrumentalWaveSurfer.current.playPause();
-    if(playing) {
-      vocalAudioRef.current.pause();
-      instrumentalAudioRef.current.pause();
-    }
-    else{
-      vocalAudioRef.current.play();
-      instrumentalAudioRef.current.play();
-    }
-    setPlaying(!playing);
+    vocalAudioRef.current.play();
+    instrumentalAudioRef.current.play();
+    vocalWaveSurfer.current.play();
+    instrumentalWaveSurfer.current.play();
+    setPlaying(true);
+  }
+
+  const handlePause = () => {
+    if(!vocalWaveSurfer.current || !instrumentalWaveSurfer.current || !vocalAudioRef.current || !instrumentalAudioRef.current) return;
+    vocalAudioRef.current.pause();
+    instrumentalAudioRef.current.pause();
+    vocalWaveSurfer.current.pause();
+    instrumentalWaveSurfer.current.pause();
+    setPlaying(false);
   }
 
   const handleVocalVolumeChange = (newVolume: number) => {
@@ -336,7 +349,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           <div id='instrumentalWaveform' ref={instrumentalWaveformRef} style={{ width: '100%'}} onClick={() => {handleInstrumentalTimeChange()}}/>
       </div>
 
-      {<WaveformRecorder setTime={setTime} handlePlayPause={handlePlayPause} duration={duration} time={currentTime}/>}
+      {<WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime}/>}
 
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />

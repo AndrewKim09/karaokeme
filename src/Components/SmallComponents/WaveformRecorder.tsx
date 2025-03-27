@@ -7,12 +7,13 @@ import RecordPlugin from 'wavesurfer.js/dist/plugins/record'
 
 interface recorderParams {
   setTime: (time: number) => void,
-  handlePlayPause: () => void,
+  handlePlay: () => void,
+  handlePause: () => void,
   duration: number
   time: number
 }
 
-const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, duration, time }) => {
+const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handlePause, duration, time }) => {
   const waveformRef = useRef<HTMLDivElement>(null);
   const recorderWaveSurfer = useRef<WaveSurfer | null>(null);
 
@@ -59,7 +60,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, d
     }
 
     recorderWaveSurfer.current = WaveSurfer.create(instrumentalWaveSurferOption(waveformRef.current));
-    // recorderWaveSurfer.current.setVolume(0)
+    recorderWaveSurfer.current.setVolume(0)
 
     let newRecord = recorderWaveSurfer.current.registerPlugin(
       RecordPlugin.create({
@@ -85,8 +86,6 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, d
 
       let newBlob = blob;
 
-
-
       if (recordedAudioRef.current.src) {
         const mergedBlob = await mergeBlobs(newBlob, blob);
         newBlob = mergedBlob;
@@ -94,7 +93,17 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, d
       recordedBlob.current = newBlob;
       recordedAudioRef.current.src = URL.createObjectURL(newBlob)
       recorderWaveSurfer.current?.loadBlob(newBlob);
-      setPlayable(true);
+
+      recorderWaveSurfer.current?.on("ready", () => {
+        console.log("WaveSurfer is ready");
+        recorderWaveSurfer.current?.setTime(0)
+        if (recordedAudioRef.current) {
+          recordedAudioRef.current.currentTime = 0;
+        }
+        setTime(0);
+        setPlayable(true);
+        setIsPlaying(false);
+      });
     });
 
 
@@ -119,15 +128,15 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, d
       const duration = recorderWaveSurfer.current.getDuration();
       recorderWaveSurfer.current.seekTo(clickRatio);
       recordedAudioRef.current.currentTime = clickRatio * duration;
-      setTimeStartedAt(clickRatio * duration);
       setTime(clickRatio * duration);
       console.log(`Seeking to: ${clickRatio * duration}s`);
     });
 
-    recordedAudioRef.current.addEventListener('ended', () => {
+    recorderWaveSurfer.current.on('finish', () => {
       console.log("Audio ended");
+      setTimeEndedAt(recorderWaveSurfer.current?.getCurrentTime() || 0);
+      handlePause();
       setIsPlaying(false);
-      
     })
 
     return () => {
@@ -141,7 +150,6 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, d
       }
       if (recordedAudioRef.current) {
         recordedAudioRef.current.src = "";
-        recordedAudioRef.current = null;
       }
     };
 
@@ -169,17 +177,27 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlayPause, d
 
     if (!recording) {
       recordPluginRef.current.startRecording();
+      handlePlay();
     } else {
       recordPluginRef.current.stopRecording();
+      handlePause();
     }
 
     setRecording(!recording);
-    handlePlayPause();
   };
 
   const togglePlayback = () => {
-    if (!recorderWaveSurfer.current || !playable) return;
+    if (!recorderWaveSurfer.current || !playable || !recordedAudioRef.current) return;
     recorderWaveSurfer.current.playPause();
+    recordedAudioRef.current.play();
+    if(!isPlaying){
+      setTimeStartedAt(recorderWaveSurfer.current.getCurrentTime());
+      handlePlay();
+    }
+    else{
+      setTimeEndedAt(recorderWaveSurfer.current.getCurrentTime());
+      handlePause();
+    }
     setIsPlaying(!isPlaying);
   };
 
