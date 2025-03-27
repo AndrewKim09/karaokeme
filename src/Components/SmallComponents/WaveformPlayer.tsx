@@ -54,21 +54,6 @@ const instrumentalWaveSurferOption = (ref: HTMLElement) => ({
   barGap: 3
 })
 
-const recordingWaveSurferOption = (ref: HTMLElement) => ({
-  container: ref,
-  waveColor: '#ccc',
-  backgroundColor: '#020',
-  progressColor: '#db0400',
-  cursorColor: 'transparent',
-  response: true,
-  height: 40,
-  normalize: true,
-  backend: "WebAudio" as "WebAudio", // Explicitly type the backend
-  barWidth: 2,
-  barGap: 3
-})
-
-
 const formatTime = (seconds: number) => {
   let date = new Date(0)
   date.setSeconds(seconds)
@@ -95,7 +80,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   const [instrumentalMuted, setInstrumentalMuted] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [totalTIme, setTotalTime] = useState(0);
 
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([]);
 
@@ -132,7 +117,6 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       vocalWaveSurfer.current.setVolume(0);
       setVocalVolume(.5);
       setDuration(vocalWaveSurfer.current?.getDuration());
-      setLoaded(true)
     })
 
     instrumentalWaveSurfer.current.on('ready', () => {
@@ -140,14 +124,16 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       instrumentalWaveSurfer.current.setVolume(0);
       setInstrumentalVolume(0.5);
       setDuration(instrumentalWaveSurfer.current?.getDuration());
-      setLoaded(true)
     })
 
     vocalWaveSurfer.current.on('audioprocess', () => {
       if(!vocalWaveSurfer.current) return;
       setCurrentTime(vocalWaveSurfer.current?.getCurrentTime());
     })
-    
+
+    instrumentalWaveSurfer.current.on('finish', () => {
+      setPlaying(false);
+    })
 
     return () => {
       if (instrumentalWaveSurfer.current && vocalWaveSurfer.current) {
@@ -155,6 +141,12 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         instrumentalWaveSurfer.current.destroy();
         vocalWaveSurfer.current = null;
         instrumentalWaveSurfer.current = null;
+      }
+      if(vocalAudioRef.current) {
+        vocalAudioRef.current.src = "";
+      }
+      if(instrumentalAudioRef.current) {
+        instrumentalAudioRef.current.src = "";
       }
     };
   }, [instrumentalFile, vocalFile]);
@@ -272,6 +264,9 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
     <Box sx={{ textAlign: "center", width: 'fit-content', }}>
 
       <LyricDisplay lyrics={lyrics} time={currentTime} setTime={setTime}/>
+      <span>
+        {formatTime(currentTime)} <br/>
+      </span>
 
       <Button 
         onClick={handlePlayPause} 
@@ -341,16 +336,12 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           <div id='instrumentalWaveform' ref={instrumentalWaveformRef} style={{ width: '100%'}} onClick={() => {handleInstrumentalTimeChange()}}/>
       </div>
 
-      {<WaveformRecorder setTime={setTime} handlePlayPause={handlePlayPause}/>}
-
-      <span>
-        {formatTime(currentTime)} <br/>
-      </span>
+      {<WaveformRecorder setTime={setTime} handlePlayPause={handlePlayPause} duration={duration} time={currentTime}/>}
 
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />
 
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-2 my-4">
         <Typography 
           className="font-bold" 
           textColor="text.secondary"

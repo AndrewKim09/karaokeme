@@ -178,36 +178,6 @@ export const GeneratePage = () => {
         "start": 229,
         "text": " Every day it'll rain, rain, rain"
     },
-    {
-        "end": 259,
-        "start": 256,
-        "text": " If I was your baby"
-    },
-    {
-        "end": 262,
-        "start": 259,
-        "text": " Then there'll be no clear skies"
-    },
-    {
-        "end": 265,
-        "start": 262,
-        "text": " If I was your baby"
-    },
-    {
-        "end": 273,
-        "start": 265,
-        "text": " And just like the clouds my eyes will do the same"
-    },
-    {
-        "end": 276,
-        "start": 273,
-        "text": " If you walk away"
-    },
-    {
-        "end": 284,
-        "start": 276,
-        "text": " Every day it'll rain, rain, rain"
-    }
 ]);
   const [accompaniment, setAccompaniment] = useState<string | null>(null);
   const [vocal, setVocal] = useState<string | null>(null);
