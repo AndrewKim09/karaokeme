@@ -1,6 +1,7 @@
-import { Box, Typography } from '@mui/joy';
-import React, { useEffect, useState } from 'react'
-import theme from '../../theme';
+import { Box, Typography, useColorScheme } from '@mui/joy';
+import React, { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit } from '@fortawesome/free-solid-svg-icons';
 
 type Segment = {
   start: number;
@@ -14,25 +15,66 @@ type LyricDisplayProps = {
   setTime: (time: number) => void;
 };
 
-export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time, setTime}) => {
+export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTime }) => {
+  const [editedLyrics, setEditedLyrics] = useState<Segment[]>(lyrics);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [tempText, setTempText] = useState<string>("");
+
   const lyricsContainerRef = React.useRef<HTMLDivElement>(null);
 
+  const mode = useColorScheme();
 
   // Find the current lyric line based on time
   const currentLineIndex = lyrics.findIndex(
-    (line) => (time + .25) >= line.start && (time + .25) <= line.end
+    (line) => time + 0.25 >= line.start && time + 0.25 <= line.end
   );
 
   useEffect(() => {
     if (lyricsContainerRef.current) {
       const activeLine = lyricsContainerRef.current.children[currentLineIndex] as HTMLDivElement;
       if (activeLine) {
-        activeLine.scrollIntoView({ behavior: "smooth", block: "center" });
+        activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }, [currentLineIndex]);
 
+  const showTools = (e: React.MouseEvent) => {
+    const tools = e.currentTarget.querySelector('#tools') as HTMLDivElement;
+    if (tools) {
+      tools.style.opacity = '1';
+    }
+  };
 
+  const hideTools = (e: React.MouseEvent) => {
+    const tools = e.currentTarget.querySelector('#tools') as HTMLDivElement;
+    if (tools) {
+      tools.style.opacity = '0';
+    }
+  };
+
+  const onEdit = (index: number, text: string) => {
+    setEditingIndex(index);
+    setTempText(text);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTempText(e.target.value);
+  };
+
+  const saveEdit = () => {
+    if (editingIndex !== null) {
+      const updatedLyrics = [...editedLyrics];
+      updatedLyrics[editingIndex].text = tempText;
+      setEditedLyrics(updatedLyrics);
+      setEditingIndex(null);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveEdit();
+    }
+  };
 
   return (
     <Box
@@ -40,7 +82,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time, setTime
       sx={(theme) => ({
         overflowY: 'auto',
         marginTop: '20px',
-        padding: "10px",
+        padding: '10px',
         backgroundColor: theme.palette.background.level1,
         borderRadius: '10px',
         maxWidth: '800px',
@@ -48,24 +90,55 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({lyrics, time, setTime
         height: '40vh',
       })}
     >
-        {lyrics.map((line, index) => (
-          <Typography
-            key={index}
-            sx={(theme) => ({
-              padding: "5px",
-              fontSize: "25px",
-              fontWeight: currentLineIndex === index ? "bold" : "normal",
-              color: currentLineIndex === index ? theme.palette.primary.plainColor : theme.palette.text.primary,
-              cursor: "pointer",
-              ":hover": {
-                opacity: .7
-              }
-            })}
-            onClick={() => setTime(line.start)}
-          >
-            {line.text}
-          </Typography>
-        ))}
+      {editedLyrics.map((line, index) => (
+        <Typography
+          key={index}
+          sx={(theme) => ({
+            padding: '5px',
+            fontSize: '25px',
+            fontWeight: currentLineIndex === index ? 'bold' : 'normal',
+            color:
+              currentLineIndex === index
+                ? theme.palette.primary.plainColor
+                : theme.palette.text.primary,
+            position: 'relative',
+            cursor: 'pointer',
+            ':hover': {
+              opacity: 0.7,
+            },
+          })}
+          onClick={() => setTime(line.start)}
+          onMouseEnter={(e) => showTools(e)}
+          onMouseLeave={(e) => hideTools(e)}
+        >
+          <div id='tools' className='absolute top-0 left-0 flex items-center justify-center opacity-0'>
+            <button className='text-sm' onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering parent click event
+              onEdit(index, line.text);
+            }}>
+              <FontAwesomeIcon
+                icon={faEdit}
+                className={`none ${
+                  mode.colorScheme === 'light' ? 'text-gray-600 hover:text-black' : 'text-gray-600 hover:text-white'
+                }`}
+              />
+            </button>
+          </div>
+
+          {editingIndex === index ? (
+            <textarea
+              value={tempText}
+              onChange={handleInputChange}
+              onBlur={saveEdit}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              className="bg-transparent border-b border-gray-500 outline-none w-[100%] text-center"
+            />
+          ) : (
+            line.text
+          )}
+        </Typography>
+      ))}
     </Box>
-  )
-}
+  );
+};

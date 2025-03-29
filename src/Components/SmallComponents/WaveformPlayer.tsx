@@ -349,7 +349,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           <div id='instrumentalWaveform' ref={instrumentalWaveformRef} style={{ width: '100%'}} onClick={() => {handleInstrumentalTimeChange()}}/>
       </div>
 
-      {<WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime}/>}
+      {<WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime} playing={playing}/>}
 
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />

@@ -9,11 +9,12 @@ interface recorderParams {
   setTime: (time: number) => void,
   handlePlay: () => void,
   handlePause: () => void,
-  duration: number
-  time: number
+  duration: number,
+  time: number,
+  playing: boolean
 }
 
-const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handlePause, duration, time }) => {
+const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handlePause, duration, time, playing }) => {
   
   const waveformRef = useRef<HTMLDivElement>(null);
   const recorderWaveSurfer = useRef<WaveSurfer | null>(null);
@@ -286,6 +287,14 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
     }
     setRecordedMuted(!recordedMuted);
   }
+
+  useEffect(() => {
+    if(!playing){
+      recorderWaveSurfer.current?.pause();
+      recordedAudioRef.current?.pause();
+      setIsPlaying(false);
+    }
+  })
 
   return (
     <div>
