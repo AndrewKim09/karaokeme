@@ -298,7 +298,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
   return (
     <div>
-      <div className="flex items-center w-[100%] h-[70px]">
+      <div className="flex items-center w-[100%] h-[70px] max-w-[80vw]">
         <div className="flex flex-col controls h-[100%] mt-4 mr-4">
           <input
             className="audio-slider"
@@ -315,7 +315,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
             <FontAwesomeIcon icon={!recordedMuted ? faVolumeHigh : faVolumeMute} />
           </button>
         </div>
-        <div id="waveform" ref={waveformRef} className="my-4 w-[100%]"></div>
+        <div id="waveform" ref={waveformRef} className="my-4 w-[100%] overflow-auto"></div>
       </div>
 
       {/* Record Button */}

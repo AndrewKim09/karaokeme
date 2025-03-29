@@ -303,7 +303,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         <Typography level='h4' sx={{ textAlign: 'center' }}>Vocals:</Typography>
         <Typography level="body-xs">Volume: {Math.round(vocalVolume * 100)}%</Typography>
       </div>
-      <div className="flex items-center w-[100%] h-[70px]">
+      <div className="flex items-center w-[100%] h-[70px] max-w-[80vw]">
         <div className="flex flex-col controls h-[100%] mt-4 mr-4">
           <input
             className="audio-slider"
@@ -329,7 +329,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         <Typography level="body-xs">Volume: {Math.round(instrumentalVolume * 100)}%</Typography>
       </div>
 
-      <div className="flex items-center w-[100%] h-[70px]">  
+      <div className="flex items-center w-[100%] h-[70px] max-w-[80vw]">  
         <div className="flex flex-col controls h-[100%] mt-4 mr-4">
           <input
             className="audio-slider"
@@ -349,38 +349,43 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           <div id='instrumentalWaveform' ref={instrumentalWaveformRef} style={{ width: '100%'}} onClick={() => {handleInstrumentalTimeChange()}}/>
       </div>
 
+      
+      <div className="flex flex-wrap items-center justify-center gap-2 my-4 w-[100%] max-w-[80vw]">
+        <div className="flex items-center gap-2">
+          <Typography 
+            className="font-bold" 
+            textColor="text.secondary"
+            display={"inline"}
+          >
+            Vocal Output:
+          </Typography>
+          <Select onChange={(e, value : string | null) => setVocalOutput(value)} className="w-20 cursor-pointer">
+            {outputDevices.map((device) => (
+              <Option key={device.deviceId} value={device.deviceId}>{device.label}</Option>
+            ))}
+          </Select>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Typography 
+            className="font-bold"
+            textColor={"text.secondary"}
+            display={"inline"}
+          >
+            Instrumental Output:
+          </Typography>
+          <Select onChange={(e, value: string | null) => setInstrumentalOutput(value)} className="w-20 cursor-pointer">
+            {outputDevices.map((device) => (
+              <Option key={device.deviceId} value={device.deviceId} >{device.label}</Option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
       {<WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime} playing={playing}/>}
 
       <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
       <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />
-
-      <div className="flex items-center justify-center gap-2 my-4">
-        <Typography 
-          className="font-bold" 
-          textColor="text.secondary"
-          display={"inline"}
-        >
-          Vocal Output:
-        </Typography>
-        <Select onChange={(e, value : string | null) => setVocalOutput(value)} className="w-20 cursor-pointer">
-          {outputDevices.map((device) => (
-            <Option key={device.deviceId} value={device.deviceId}>{device.label}</Option>
-          ))}
-        </Select>
-        
-        <Typography 
-          className="font-bold"
-          textColor={"text.secondary"}
-          display={"inline"}
-        >
-          Instrumental Output:
-        </Typography>
-        <Select onChange={(e, value: string | null) => setInstrumentalOutput(value)} className="w-20 cursor-pointer">
-          {outputDevices.map((device) => (
-            <Option key={device.deviceId} value={device.deviceId} >{device.label}</Option>
-          ))}
-        </Select>
-      </div>
 
     </Box>
   );
