@@ -14,14 +14,14 @@ interface recorderParams {
 }
 
 const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handlePause, duration, time }) => {
+  
   const waveformRef = useRef<HTMLDivElement>(null);
   const recorderWaveSurfer = useRef<WaveSurfer | null>(null);
 
   const recordPluginRef = useRef<RecordPlugin | null>(null);
   const [recording, setRecording] = useState(false);
 
-  const [timeStartedAt, setTimeStartedAt] = useState(0);
-  const [timeEndedAt, setTimeEndedAt] = useState(0);
+  // const timeStartedAt = useRef<number>(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playable, setPlayable] = useState(false);
@@ -32,10 +32,15 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
   const [recordedVolume, setRecordedVolume] = useState(0);
 
   const recordedAudioRef = useRef<HTMLAudioElement>(null);
+  const recordedAudioURL = useRef<string | null>(null);
   const recordedBlob = useRef<Blob | null>(null);
 
   let scrollingWaveform = false
   let continuousWaveform = true
+
+  useEffect(() => {
+    console.log(recordedAudioRef.current?.src)
+  }, [recordedAudioRef.current?.src])
 
   const instrumentalWaveSurferOption = (ref: HTMLElement) => ({
     container: ref,
@@ -74,38 +79,89 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
     recordPluginRef.current = newRecord;
     
     newRecord.on("record-end", async (blob) => {
-      setPlayable(false)
-      if(!recordedAudioRef.current) return
-      console.log("Recording ended, received blob:", blob);
+      setPlayable(false);
+      if (!recordedAudioRef.current) return;
+    
+      try {
 
-      if (!blob) {
-        console.error("No recording data received.");
-        return;
-      }
+        //--------------UNFINISHED MERGING AND SPLITTING CODE----------------
+        // let finalBlob = blob;
+    
+        // // Only attempt merging if we have existing audio
+        // if (recordedAudioRef.current.src && recordedBlob.current && recorderWaveSurfer.current) {
+          
+        //   // Create a copy of the current blob for safety
+        //   const currentBlob = recordedBlob.current;
+        //   console.log("Current blob size:", currentBlob.size);
+        //   console.log("recorded blob size:", blob.size);
 
+        //   console.log("Time started at:", timeStartedAt.current);
+        //   console.log("recorder wave surfer duration:", recorderWaveSurfer.current.getDuration());          
+          
+        //   if (timeStartedAt.current >= recordedAudioRef.current.duration) {
+        //     console.log('Appending at end');
+        //     finalBlob = await mergeBlobs(currentBlob, blob);
+        //   } else if (timeStartedAt.current > 0) {
+        //     console.log('Inserting in middle');
+        //     const firstPart = sliceAudioBlob(currentBlob, 0, timeStartedAt.current);
+        //     const firstMerge = await mergeBlobs(firstPart, blob);
+        //     const secondPart = sliceAudioBlob(currentBlob, firstMerge.size, currentBlob.size);
 
-      let newBlob = blob;
+        //     console.log('first merge size:', firstMerge.size);
 
-      if (recordedAudioRef.current.src) {
-        const mergedBlob = await mergeBlobs(newBlob, blob);
-        newBlob = mergedBlob;
-      }
-      recordedBlob.current = newBlob;
-      recordedAudioRef.current.src = URL.createObjectURL(newBlob)
-      recorderWaveSurfer.current?.loadBlob(newBlob);
-
-      recorderWaveSurfer.current?.on("ready", () => {
-        console.log("WaveSurfer is ready");
-        recorderWaveSurfer.current?.setTime(0)
-        if (recordedAudioRef.current) {
-          recordedAudioRef.current.currentTime = 0;
+        //     finalBlob = await mergeBlobs(firstMerge, secondPart);
+        //   } else {
+        //     console.log('Prepending at beginning');
+        //     const remainingPart = sliceAudioBlob(currentBlob, blob.size, currentBlob.size);
+        //     finalBlob = await mergeBlobs(blob, remainingPart);
+        //   }
+        // }
+    
+        // Update our blob reference FIRST
+        recordedBlob.current = blob;
+    
+        // Clean up previous URL if it exists
+        if (recordedAudioRef.current.src) {
+          URL.revokeObjectURL(recordedAudioRef.current.src);
         }
+    
+        // Create new URL
+        const newAudioUrl = URL.createObjectURL(blob);
+        recordedAudioURL.current = newAudioUrl;
+    
+        recordedAudioRef.current.currentTime = 0;
+    
+        // Load the blob into wavesurfer
+        await recorderWaveSurfer.current?.loadBlob(blob);
+        recorderWaveSurfer.current?.setTime(0);
+    
+        // Small delay to ensure everything is synced
+        await new Promise(resolve => setTimeout(resolve, 50));
+    
+        // Update state
         setTime(0);
         setPlayable(true);
         setIsPlaying(false);
-      });
+    
+      } catch (error) {
+        console.error("Error handling recording:", error);
+        setPlayable(false);
+        setIsPlaying(false);
+      }
     });
 
+
+    // const sliceAudioBlob = (blob: Blob, start: number, end: number): Blob => {
+    //   const duration = recordedAudioRef.current?.duration || 0;
+    //   const bytesPerSecond = blob.size / duration;
+
+    //   const endByte = Math.min(Math.floor(end * bytesPerSecond), blob.size);
+    //   console.log(`Slicing blob from ${start} to ${endByte} bytes`);
+    //   console.log('Blob size:', blob.size);
+
+    //   const slicedBlob = blob.slice(start, endByte);
+    //   return slicedBlob;
+    // }
 
 
     const micSelect = document.querySelector('#mic-select')
@@ -134,7 +190,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
     recorderWaveSurfer.current.on('finish', () => {
       console.log("Audio ended");
-      setTimeEndedAt(recorderWaveSurfer.current?.getCurrentTime() || 0);
+      recordedAudioRef.current?.pause();
       handlePause();
       setIsPlaying(false);
     })
@@ -176,9 +232,16 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
     }
 
     if (!recording) {
+      console.log("Starting recording...");
+      setTime(0);
+      // if(recordedAudioRef.current) {
+      //   console.log('started recording at ', recorderWaveSurfer.current?.getCurrentTime())
+      // }
+      // timeStartedAt.current = (recorderWaveSurfer.current?.getCurrentTime() || 0);
       recordPluginRef.current.startRecording();
       handlePlay();
     } else {
+      console.log("Stopping recording...");
       recordPluginRef.current.stopRecording();
       handlePause();
     }
@@ -189,14 +252,22 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
   const togglePlayback = () => {
     if (!recorderWaveSurfer.current || !playable || !recordedAudioRef.current) return;
     recorderWaveSurfer.current.playPause();
-    recordedAudioRef.current.play();
+    console.log("recorder wave surfer time:", recorderWaveSurfer.current.getCurrentTime())
     if(!isPlaying){
-      setTimeStartedAt(recorderWaveSurfer.current.getCurrentTime());
+      recordedAudioRef.current.src = recordedAudioURL.current || "";
+      recordedAudioRef.current.load()
+
+      if(recorderWaveSurfer.current.getCurrentTime() == 0 || time > recorderWaveSurfer.current.getDuration()){
+        console.log("Resetting recorded audio time to 0");
+        recordedAudioRef.current.currentTime = 0;
+        setTime(0);
+      }
+      recordedAudioRef.current.play();
       handlePlay();
     }
     else{
-      setTimeEndedAt(recorderWaveSurfer.current.getCurrentTime());
       handlePause();
+      recordedAudioRef.current.pause();
     }
     setIsPlaying(!isPlaying);
   };
@@ -267,7 +338,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
         </Select>
       </div>
 
-      <audio className="" ref={recordedAudioRef} controls/>
+      <audio src={recordedAudioURL.current || undefined} className="hidden" ref={recordedAudioRef} controls/>
     </div>
   );
 };
