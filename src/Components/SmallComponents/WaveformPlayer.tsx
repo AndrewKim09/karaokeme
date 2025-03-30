@@ -9,6 +9,7 @@ import { FormatListNumbered } from "@mui/icons-material";
 import theme from "../../theme";
 import { LyricDisplay } from "./LyricDisplay";
 import WaveformRecorder from "./WaveformRecorder";
+import { VideoGenerator } from "./VideoGenerator";
 
 interface WaveformPlayerProps {
   vocalFile: string;
@@ -281,6 +282,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         {formatTime(currentTime)} <br/>
       </span>
 
+      <div className="flex items-center justify-center gap-2">
       <Button 
         onClick={handlePlayPause} 
         className="h-10 text-xl "
@@ -297,6 +299,15 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       >
           <FontAwesomeIcon icon={playing ? faPause : faPlay} />
       </Button>
+
+      {instrumentalFile && lyrics && instrumentalAudioRef.current && 
+        <VideoGenerator 
+          instrumentalFile={instrumentalFile} 
+          lyrics={lyrics} 
+          duration={duration}
+          />
+        }
+      </div>
 
       {/* Waveform Display */}
       <div className="flex items-center justify-center gap-2">

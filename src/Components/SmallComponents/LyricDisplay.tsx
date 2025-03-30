@@ -102,8 +102,9 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
           onClick={() => setTime(line.start)}
           onMouseEnter={(e) => showTools(e)}
           onMouseLeave={(e) => hideTools(e)}
+          key={index}
         >
-          <Typography
+          <Box
             key={index}
             sx={(theme) => ({
               padding: '5px',
@@ -161,7 +162,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
             ) : (
               line.text
             )}
-          </Typography>
+          </Box>
         </div>
       ))}
     </Box>
