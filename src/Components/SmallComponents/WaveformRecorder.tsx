@@ -1,6 +1,6 @@
 import { faCircle, faPause, faPlay, faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Option, optionClasses, Select, Typography } from "@mui/joy";
+import { Button, Option, optionClasses, Select, Typography } from "@mui/joy";
 import React, { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record'
@@ -212,19 +212,19 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
   }, [waveformRef, duration, recordedAudioRef])
 
-  const mergeBlobs = async (blob1: Blob, blob2: Blob): Promise<Blob> => {
-    // Convert both blobs to ArrayBuffers
-    const arrayBuffer1 = await blob1.arrayBuffer();
-    const arrayBuffer2 = await blob2.arrayBuffer();
+  // const mergeBlobs = async (blob1: Blob, blob2: Blob): Promise<Blob> => {
+  //   // Convert both blobs to ArrayBuffers
+  //   const arrayBuffer1 = await blob1.arrayBuffer();
+  //   const arrayBuffer2 = await blob2.arrayBuffer();
   
-    // Concatenate the ArrayBuffers
-    const combinedArrayBuffer = new Uint8Array(arrayBuffer1.byteLength + arrayBuffer2.byteLength);
-    combinedArrayBuffer.set(new Uint8Array(arrayBuffer1), 0);
-    combinedArrayBuffer.set(new Uint8Array(arrayBuffer2), arrayBuffer1.byteLength);
+  //   // Concatenate the ArrayBuffers
+  //   const combinedArrayBuffer = new Uint8Array(arrayBuffer1.byteLength + arrayBuffer2.byteLength);
+  //   combinedArrayBuffer.set(new Uint8Array(arrayBuffer1), 0);
+  //   combinedArrayBuffer.set(new Uint8Array(arrayBuffer2), arrayBuffer1.byteLength);
   
-    // Return a new Blob from the combined ArrayBuffer
-    return new Blob([combinedArrayBuffer], { type: "audio/wav" });  // Adjust type if needed
-  };
+  //   // Return a new Blob from the combined ArrayBuffer
+  //   return new Blob([combinedArrayBuffer], { type: "audio/wav" });  // Adjust type if needed
+  // };
 
   const toggleRecording = () => {
     if (!recordPluginRef.current) {
@@ -298,6 +298,10 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
   return (
     <div>
+      <div className="flex items-center justify-center gap-2">
+        <Typography level='h4' sx={{ textAlign: 'center' }}>Recording:</Typography>
+        <Typography level="body-xs">Volume: {Math.round(recordedVolume * 100)}%</Typography>
+      </div>
       <div className="flex items-center w-[100%] h-[70px] max-w-[80vw]">
         <div className="flex flex-col controls h-[100%] mt-4 mr-4">
           <input
@@ -319,12 +323,27 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
       </div>
 
       {/* Record Button */}
-      <button onClick={toggleRecording} className="my-4 text-lg">
+      <Button onClick={toggleRecording} className="my-4 text-lg"
+        sx={(theme) => ({
+          color: theme.palette.text.primary,
+          background: 'none',
+          right: '0',
+          top: '0px',
+          opacity: 0.5,
+          ':hover': {
+            background: 'none',
+            opacity: 1,
+            scale: 1.3,
+          },
+          transition: 'scale 0.3s ease',
+          zIndex: 1000
+        })}
+      >
         <FontAwesomeIcon
           className={recording ? "text-black" : "text-red-500"}
           icon={recording ? faPause : faCircle}
         />
-      </button>
+      </Button>
 
       {/* Playback Button (Only shows after recording) */}
       {playable && !recording && (

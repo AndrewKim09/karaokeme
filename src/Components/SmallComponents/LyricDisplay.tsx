@@ -1,7 +1,7 @@
-import { Box, Typography, useColorScheme } from '@mui/joy';
+import { Box, Button, Typography, useColorScheme } from '@mui/joy';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDeleteLeft, faEdit, faX } from '@fortawesome/free-solid-svg-icons';
+import { faDeleteLeft, faEdit, faExpand, faX } from '@fortawesome/free-solid-svg-icons';
 
 type Segment = {
   start: number;
@@ -21,6 +21,8 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
   const [tempText, setTempText] = useState<string>("");
 
   const lyricsContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const [expanded, setExpanded] = useState(false);
 
   const mode = useColorScheme();
 
@@ -94,11 +96,32 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
         maxWidth: '800px',
         width: '80vw',
         height: '40vh',
+        position: 'relative',
       })}
     >
+      <div className='sticky top-0 z-50 flex justify-end'>
+        <Button
+          sx={(theme) => ({
+            color: theme.palette.text.primary,
+            background: 'none',
+            right: '0',
+            top: '0px',
+            opacity: 0.5,
+            ':hover': {
+              background: 'none',
+              opacity: 1,
+              scale: 1.3,
+            },
+            transition: 'scale 0.3s ease',
+            zIndex: 1000
+          })}
+        >
+          <FontAwesomeIcon icon={faExpand}/>
+        </Button>
+      </div>
       {editedLyrics.map((line, index) => (
         <div 
-          className='w-[100%] flex justify-end'
+          className='w-[100%] flex justify-end relative'
           onClick={() => setTime(line.start)}
           onMouseEnter={(e) => showTools(e)}
           onMouseLeave={(e) => hideTools(e)}
@@ -109,7 +132,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
             sx={(theme) => ({
               padding: '5px',
               fontSize: '25px',
-              fontWeight: currentLineIndex === index ? 'bold' : 'normal',
+              // fontWeight: currentLineIndex === index ? 'bold' : 'normal',
               width: '90%',
               color:
                 currentLineIndex === index
@@ -125,11 +148,11 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
             <div id='tools' className='absolute top-0 left-[-40px] flex items-center justify-center gap-2 opacity-0'>
               <div className='flex items-center justify-between h-[100%] absolute z-40 top-[80%] text-xs sm:invisible md:visible'> 
                 <Typography>
-                  {line.start.toFixed(2)}s
+                  {line.start.toFixed(0)}s
                 </Typography>
                 -
                 <Typography>
-                  {line.end.toFixed(2)}s
+                  {line.end.toFixed(0)}s
                 </Typography>
               </div>
 

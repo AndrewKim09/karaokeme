@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDownload, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { Button } from "@mui/joy";
 
 const ffmpeg = new FFmpeg(); // Persistent instance
 
@@ -30,6 +33,10 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
       }
     };
     loadFFmpeg();
+    return () => {
+      ffmpeg.terminate();
+      setIsFFmpegReady(false);
+    }
   }, []);
 
   const generateVideo = async () => {
@@ -49,7 +56,7 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
     const totalFrames = Math.floor(duration * fps);
 
     // Prepare frames
-    console.log("Generating frames...");
+    console.log("Generating frames...: ", totalFrames);
     for (let frame = 0; frame < totalFrames; frame++) {
       const time = frame / fps;
 
@@ -109,9 +116,23 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
   return (
     <div>
       <canvas ref={canvasRef} width={1280} height={720} hidden />
-      <button onClick={generateVideo} disabled={loading || !isFFmpegReady}>
-        {loading ? "Generating..." : isFFmpegReady ? "Generate MP4" : "Loading FFmpeg..."}
-      </button>
+      <Button onClick={generateVideo} disabled={loading || !isFFmpegReady} 
+        sx={(theme) => ({
+          color: theme.palette.text.primary,
+          background: 'none',
+          right: '0',
+          top: '0px',
+          opacity: 0.5,
+          ':hover': {
+            background: 'none',
+            opacity: 1,
+            scale: 1.3,
+          },
+          transition: 'scale 0.3s ease',
+        })}
+      >
+        {loading ? <FontAwesomeIcon icon={faSpinner}/> : isFFmpegReady ? <FontAwesomeIcon icon={faDownload}/> : <FontAwesomeIcon icon={faSpinner}/>}
+      </Button>
       {videoUrl && (
         <a href={videoUrl} download="lyrics_video.mp4">
           <button>Download MP4</button>
