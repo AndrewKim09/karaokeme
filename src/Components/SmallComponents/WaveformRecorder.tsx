@@ -336,7 +336,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
             scale: 1.3,
           },
           transition: 'scale 0.3s ease',
-          zIndex: 1000
+          zIndex: 250
         })}
       >
         <FontAwesomeIcon

@@ -275,7 +275,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   return (
     <Box sx={{ textAlign: "center", width: 'fit-content', }}>
 
-      <LyricDisplay lyrics={lyrics} time={currentTime} setTime={setTime}/>
+      <LyricDisplay lyrics={lyrics} time={currentTime} setTime={setTime} playing={playing} duration={duration} handlePause={handlePause} handlePlay={handlePlay}/>
       <span>
         {formatTime(currentTime)} <br/>
       </span>

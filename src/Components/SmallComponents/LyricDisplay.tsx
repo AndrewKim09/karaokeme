@@ -1,7 +1,10 @@
 import { Box, Button, Typography, useColorScheme } from '@mui/joy';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDeleteLeft, faEdit, faExpand, faX } from '@fortawesome/free-solid-svg-icons';
+import { faDeleteLeft, faEdit, faExpand, faPause, faPlay, faX } from '@fortawesome/free-solid-svg-icons';
+import theme from '../../theme';
+import { Repeat } from '@mui/icons-material';
+import { duration } from '@mui/material';
 
 type Segment = {
   start: number;
@@ -13,9 +16,13 @@ type LyricDisplayProps = {
   lyrics: Segment[];
   time: number;
   setTime: (time: number) => void;
+  playing: boolean;
+  duration: number;
+  handlePlay: () => void;
+  handlePause: () => void;
 };
 
-export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTime }) => {
+export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTime, playing, duration , handlePlay, handlePause}) => {
   const [editedLyrics, setEditedLyrics] = useState<Segment[]>(lyrics);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [tempText, setTempText] = useState<string>("");
@@ -83,23 +90,42 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
     setEditedLyrics(updatedLyrics);
   }
 
+  const handlePlayPause = () => {
+    if(playing) {
+      handlePause();
+    }
+    else {
+      handlePlay();
+    }
+  }
+
   return (
     <Box
       ref={lyricsContainerRef}
       sx={(theme) => ({
         overflow: 'visible',
         overflowY: 'scroll',
-        marginTop: '20px',
-        padding: '10px',
+        marginTop: expanded ? '0' : '20px',
+        padding: expanded ? '0' : '10px',
         backgroundColor: theme.palette.background.level1,
         borderRadius: '10px',
-        maxWidth: '800px',
-        width: '80vw',
-        height: '40vh',
-        position: 'relative',
+        maxWidth: expanded? 'auto' : '800px',
+        width: expanded? 'auto': '80vw',
+        height: expanded? 'auto' : '40vh',
+        position: expanded ? 'fixed' : 'relative',
+        top: expanded ? '0' : 'auto',
+        left: expanded ? '0' : 'auto',
+        bottom: expanded ? '0' : 'auto',
+        right: expanded ? '0' : 'auto',
+        zIndex: expanded ? 500 : 'auto',
+        scrollbarColor: `${theme.palette.primary.plainColor} ${theme.palette.background.level1}`,
       })}
     >
-      <div className='sticky top-0 z-50 flex justify-end'>
+      <Box className='sticky top-0 z-50 flex'
+        sx={(theme) => ({
+          justifyItems: expanded ? 'start' : 'end',
+        })}
+      >
         <Button
           sx={(theme) => ({
             color: theme.palette.text.primary,
@@ -115,10 +141,12 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
             transition: 'scale 0.3s ease',
             zIndex: 1000
           })}
+          onClick={() => setExpanded(!expanded)}
         >
           <FontAwesomeIcon icon={faExpand}/>
         </Button>
-      </div>
+      </Box>
+
       {editedLyrics.map((line, index) => (
         <div 
           className='w-[100%] flex justify-end relative'
@@ -133,7 +161,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
               padding: '5px',
               fontSize: '25px',
               // fontWeight: currentLineIndex === index ? 'bold' : 'normal',
-              width: '90%',
+              width: expanded ? '100%' : '90%',
               color:
                 currentLineIndex === index
                   ? theme.palette.primary.plainColor
@@ -188,6 +216,66 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
           </Box>
         </div>
       ))}
+
+      <div className='h-[140px]'></div>
+      <Box
+        sx={(theme) => ({
+          position: 'fixed',
+          bottom: '0',
+          display: expanded ? 'flex' : 'none',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: 'fit-content',
+          padding: '10px',
+          zIndex: 1000,
+          background: theme.palette.background.level2,
+          width: '100%',
+          flexDirection: 'column'
+        })}
+      >
+        <Box 
+          className='w-[100%] flex gap-4 justify-center'
+          sx={(theme) => ({
+            color: theme.palette.text.primary,
+          })}
+        >
+          <span>
+          {(time / 60).toFixed(0)}:{(time % 60) < 10 ? '0' : ''}{(time % 60).toFixed(0)}
+          </span>
+
+          <input
+            className='w-[80%]'
+            type='range'
+            id='volume'
+            name='volume'
+            min='0'
+            max='1'
+            step='0.005'
+            value={time / duration}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const newTime = e.target.valueAsNumber * duration;
+              setTime(newTime);
+            }}
+          />
+
+          <span>
+            {(duration / 60).toFixed(0)}:{(duration % 60) < 10 ? '0' : ''}{(duration % 60).toFixed(0)}
+          </span>
+        </Box>
+
+        <Button sx={(theme) => ({
+          background: 'none',
+          hover: {
+            background: 'none',
+          },
+          color: theme.palette.text.primary,
+            
+          })}
+          onClick={handlePlayPause}
+        >
+          <FontAwesomeIcon icon={playing ? faPause : faPlay} className='text-gray-600 hover:text-black'/>
+        </Button>
+      </Box>
     </Box>
   );
 };
