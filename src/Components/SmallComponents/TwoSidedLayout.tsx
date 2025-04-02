@@ -3,11 +3,13 @@ import AspectRatio from '@mui/joy/AspectRatio';
 import Box from '@mui/joy/Box';
 import Container from '@mui/joy/Container';
 import { typographyClasses } from '@mui/joy/Typography';
+import { useColorScheme } from '@mui/joy';
 
 export default function TwoSidedLayout({
   children,
   reversed,
 }: React.PropsWithChildren<{ reversed?: boolean }>) {
+  const { mode } = useColorScheme();
   return (
     <Container
       sx={[
@@ -53,7 +55,7 @@ export default function TwoSidedLayout({
       </Box>
       <AspectRatio
         ratio={600 / 520}
-        variant="outlined"
+        variant='outlined'
         maxHeight={300}
         sx={(theme) => ({
           minWidth: 300,
@@ -65,14 +67,10 @@ export default function TwoSidedLayout({
             '--AspectRatio-minHeight': '400px',
           },
           borderRadius: 'sm',
-          bgcolor: 'background.level2',
           flexBasis: '50%',
         })}
       >
-        <img
-          src="https://images.unsplash.com/photo-1483791424735-e9ad0209eea2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80"
-          alt=""
-        />
+        <img src={mode === 'light' ? '/karaokeMeDrawingLight.png' : '/karaokeMeDrawingDark.png'} alt="Karaoke Me Drawing" className='h-[100%] aspect-square'/>
       </AspectRatio>
     </Container>
   );
