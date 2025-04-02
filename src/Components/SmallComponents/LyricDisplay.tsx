@@ -161,7 +161,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
               padding: '5px',
               fontSize: '25px',
               // fontWeight: currentLineIndex === index ? 'bold' : 'normal',
-              width: expanded ? '100%' : '90%',
+              width: expanded ? '100%' : '92%',
               color:
                 currentLineIndex === index
                   ? theme.palette.primary.plainColor
@@ -173,14 +173,15 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
               },
             })}
           >
+            {!expanded && 
             <div id='tools' className='absolute top-0 left-[-40px] flex items-center justify-center gap-2 opacity-0'>
               <div className='flex items-center justify-between h-[100%] absolute z-40 top-[80%] text-xs sm:invisible md:visible'> 
                 <Typography>
-                  {line.start.toFixed(0)}s
+                {(line.start / 60).toFixed(0)}:{(line.start % 60) < 10 ? '0' : ''}{(line.start % 60).toFixed(0)}
                 </Typography>
                 -
                 <Typography>
-                  {line.end.toFixed(0)}s
+                {(line.end / 60).toFixed(0)}:{(line.end % 60) < 10 ? '0' : ''}{(line.end % 60).toFixed(0)}
                 </Typography>
               </div>
 
@@ -200,6 +201,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
                 <FontAwesomeIcon icon={faX} onClick={() => {onDelete(index)}} className='text-red-400 text-md hover:text-red-600'/>
               </button>
             </div>
+            }
 
             {editingIndex === index ? (
               <textarea
