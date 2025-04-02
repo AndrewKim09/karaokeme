@@ -185,13 +185,13 @@ export const GeneratePage = () => {
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setAccompaniment(`${window.location.origin}/accompaniment.wav`);
-      setVocal(`${window.location.origin}/vocals.wav`);
-    };
-    fetchData().then(() => console.log("Data fetched"));
-  }, []);
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     setAccompaniment(`${window.location.origin}/accompaniment.wav`);
+  //     setVocal(`${window.location.origin}/vocals.wav`);
+  //   };
+  //   fetchData().then(() => console.log("Data fetched"));
+  // }, []);
 
 
   async function uploadFile(file: File) {
@@ -200,11 +200,11 @@ export const GeneratePage = () => {
     console.log("Uploading file:", file.name);
     setProcessing(true);
 
+    try{
     const response = await fetch("http://localhost:5000/separate", {
       method: "POST",
       body: formData,
     }).finally(() => setProcessing(false))
-    ;
 
     const result = await response.json().then(async (data) => {
       console.log(data);
@@ -212,6 +212,11 @@ export const GeneratePage = () => {
       setVocal(data.vocals);
       setLyrics(data.lyrics);
     })
+  }
+    catch (error) {
+      console.error("Error uploading file:", error);
+      setProcessing(false);
+    }
   }
 
   const checkFileType = (file: File) => {

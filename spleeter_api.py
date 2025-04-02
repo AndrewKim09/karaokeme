@@ -7,7 +7,6 @@ from werkzeug.utils import secure_filename  # type: ignore
 from flask_cors import CORS  # Import CORS
 import ffmpeg
 import whisper
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import torch
 
 app = Flask(__name__)
@@ -71,6 +70,7 @@ def get_lyrics(input_path):
 
 @app.route("/separate", methods=["POST"])
 def separate_audio():
+    print("Received request to separate audio")
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
@@ -87,14 +87,18 @@ def separate_audio():
 
     # Run Spleeter (2 stems: vocals + instrumentals)
     command = [
-        r"C:\Users\andre\anaconda3\envs\myenv\Scripts\spleeter.exe",
+        "docker",
+        "run",
+        "--runtime=nvidia",
+        "-v", f"{os.path.abspath(UPLOAD_FOLDER)}:/Downloads",  # Mount the Downloads folder
+        "-v", f"{os.path.abspath(OUTPUT_FOLDER)}/output",  # Mount the output folder
+        "deezer/spleeter:3.8",
         "separate",
-        "-p",
-        "spleeter:2stems",
-        "-o",
-        OUTPUT_FOLDER,
-        filepath
+        "-p", "spleeter:2stems",
+        "-o", OUTPUT_FOLDER,  # Ensure OUTPUT_FOLDER is defined
+        f"/Downloads/{filename}"  # Use the file inside the mounted /Downloads
     ]
+
 
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
