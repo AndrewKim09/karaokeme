@@ -41,7 +41,16 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
   useEffect(() => {
     console.log(recordedAudioRef.current?.src)
+  
   }, [recordedAudioRef.current?.src])
+
+  useEffect(() => {
+    if(!playing){
+      recorderWaveSurfer.current?.pause();
+      recordedAudioRef.current?.pause();
+      setIsPlaying(false);
+    }
+  }, [playing])
 
   const instrumentalWaveSurferOption = (ref: HTMLElement) => ({
     container: ref,

@@ -84,31 +84,51 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
   const [vocalOutput, setVocalOutput] = useState<string | null>(null);
   const [instrumentalOutput, setInstrumentalOutput] = useState<string | null>(null);
+
+  const [instrumentalBlobUrl, setInstrumentalBlobUrl] = useState<string | null>(null);
+  const [vocalBlobUrl, setVocalBlobUrl] = useState<string | null>(null);
+  const [audioBlobsLoaded, setAudioBlobsLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchAudio = async () => {
+      try{
+        if(vocalBlobUrl && instrumentalBlobUrl) return;
+        if(!vocalFile || !instrumentalFile || audioBlobsLoaded) return;
+        if(!isValidUrl(vocalFile) || !isValidUrl(instrumentalFile)) return;
+
+        const vocalResponse = await fetch(vocalFile);
+        const vocalBlob = await vocalResponse.blob();
+        const vocalUrl = URL.createObjectURL(vocalBlob);
+        setVocalBlobUrl(vocalUrl);
+  
+        const instrumentalResponse = await fetch(instrumentalFile);
+        const instrumentalBlob = await instrumentalResponse.blob();
+        const instrumentalUrl = URL.createObjectURL(instrumentalBlob);
+        setInstrumentalBlobUrl(instrumentalUrl);
+        console.log("Audio data fetched successfully.");
+        setAudioBlobsLoaded(true);
+      }
+      catch (error) {
+        console.error("Error fetching audio data:", error);
+      }
+    }
+
+    fetchAudio();
+  }, [vocalFile, instrumentalFile])
   
 
   useEffect(() => {
-    const fetchAudioData = async () => {
-        if (!vocalFile || !instrumentalFile) return;
+    if (!vocalBlobUrl || !instrumentalBlobUrl) return;
+    if (!vocalWaveformRef.current || !instrumentalWaveformRef.current) return;
 
-        if (!isValidUrl(vocalFile) || !isValidUrl(instrumentalFile)) {
-          console.log(vocalFile);
-          console.log(instrumentalFile);
-          console.log("Invalid URL");
-          return;
-        }
-    }
-
-    fetchAudioData();
-
-    if(!vocalWaveformRef.current || !instrumentalWaveformRef.current) return;
     const vocalOptions = vocalFormWaveSurferOptions(vocalWaveformRef.current);
     const instrumentalOptions = instrumentalWaveSurferOption(instrumentalWaveformRef.current);
 
     vocalWaveSurfer.current = WaveSurfer.create(vocalOptions);
     instrumentalWaveSurfer.current = WaveSurfer.create(instrumentalOptions);
 
-    vocalWaveSurfer.current.load(vocalFile);
-    instrumentalWaveSurfer.current.load(instrumentalFile);
+    vocalWaveSurfer.current.load(vocalBlobUrl);
+    instrumentalWaveSurfer.current.load(instrumentalBlobUrl);
 
     vocalWaveSurfer.current.on('ready', () => {
       if(!vocalWaveSurfer.current) return;
@@ -147,11 +167,11 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         instrumentalAudioRef.current.src = "";
       }
     };
-  }, [instrumentalFile, vocalFile]);
+  }, [vocalBlobUrl, instrumentalBlobUrl]);
 
   useEffect(() => {
     requestPermissions();
-  }, [])
+  }, [vocalBlobUrl, instrumentalBlobUrl]);
 
   const requestPermissions = async () => {
     try {
@@ -392,8 +412,8 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
       {<WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime} playing={playing}/>}
 
-      <audio id='vocalAudio' ref={vocalAudioRef} src={vocalFile} controls style={{ display: 'none' }} />
-      <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalFile} controls style={{ display: 'none' }} />
+      {vocalBlobUrl && <audio id='vocalAudio' ref={vocalAudioRef} src={vocalBlobUrl} controls style={{ display: 'none' }} />}
+      {instrumentalBlobUrl && <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalBlobUrl} controls style={{ display: 'none' }} />}
 
     </Box>
   );
