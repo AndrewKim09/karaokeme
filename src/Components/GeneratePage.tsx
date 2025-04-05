@@ -200,6 +200,10 @@ export const GeneratePage = () => {
     console.log("Uploading file:", file.name);
     setProcessing(true);
 
+    if(file.size > 7 * 1024 * 1024) {
+      showWrongFileNotification();
+    }
+
     try{
     const response = await fetch("http://localhost:5000/separate", {
       method: "POST",
@@ -223,7 +227,7 @@ export const GeneratePage = () => {
     console.log("Dropped file:", file.name);
     if (file.type !== 'audio/mpeg') {
       showWrongFileNotification();
-      console.log('Please upload an audio file');
+      console.log('Please upload an audio file that is under 7mb');
       return;
     } else {
       uploadFile(file);
@@ -345,14 +349,15 @@ export const GeneratePage = () => {
           </>}
 
           {processing && 
-            <Typography
-              sx={(theme) => ({
-                display: 'flex',
-                alignItems: 'center',
-              })}
-            >
-              <CircularProgress sx={{marginRight: '20px'}}/> Generating Track
-            </Typography>
+            <div className='flex flex-col items-center justify-center gap-2'>
+              <CircularProgress sx={{marginRight: '20px'}}/> <Typography> Generating Track </Typography>
+              <Typography level='body-xs'>
+                it can take around a minute for a 6mb file
+              </Typography>
+              <Typography level='body-xs' flexWrap={'wrap'} textAlign={'center'}>
+                audio that isnt clear will be separated properly but will not have correct lyrics
+              </Typography>
+            </div>
           }
           </Box>
       }

@@ -80,22 +80,24 @@ def separate_audio():
 
     filename = secure_filename(file.filename)
     filepath = os.path.join(UPLOAD_FOLDER, filename)
+    print("Saving file to:", filepath)
     file.save(filepath)
     base_url = request.host_url.rstrip('/')
 
     output_path = os.path.join(OUTPUT_FOLDER, os.path.splitext(filename)[0])
 
     # Run Spleeter (2 stems: vocals + instrumentals)
+    print("Running Spleeter...")
     command = [
         "docker",
         "run",
         "--runtime=nvidia",
         "-v", f"{os.path.abspath(UPLOAD_FOLDER)}:/Downloads",  # Mount the Downloads folder
-        "-v", f"{os.path.abspath(OUTPUT_FOLDER)}/output",  # Mount the output folder
+        "-v", f"{os.path.abspath(OUTPUT_FOLDER)}:/output",  # Mount the output folder
         "deezer/spleeter:3.8",
         "separate",
-        "-p", "spleeter:2stems",
         "-o", OUTPUT_FOLDER,  # Ensure OUTPUT_FOLDER is defined
+        "-p", "spleeter:2stems",
         f"/Downloads/{filename}"  # Use the file inside the mounted /Downloads
     ]
 

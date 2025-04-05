@@ -79,7 +79,6 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   const [instrumentalMuted, setInstrumentalMuted] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [totalTIme, setTotalTime] = useState(0);
 
   const [outputDevices, setOutputDevices] = useState<MediaDeviceInfo[]>([]);
 
