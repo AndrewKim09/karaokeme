@@ -8,9 +8,10 @@ import { Tracks } from './SmallComponents/Tracks'
 import gsap from 'gsap'
 import WaveformPlayer from './SmallComponents/WaveformPlayer'
 import { LyricDisplay } from './SmallComponents/LyricDisplay'
-import { collection, getFirestore } from "firebase/firestore";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
 import { doc, setDoc, Timestamp } from "firebase/firestore"; 
+import { getAuth } from 'firebase/auth'
 
 
 type Segment = {
@@ -115,9 +116,6 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
 
     const instrumentalRef = ref(storage, `${karaokeParams.title}/accompaniment.wav`)
     
-    const karaokeCollection = collection(db, 'SavedKaraokes')
-    const karaokeDocRef = doc(karaokeCollection, karaokeParams.title)
-    
     
     const dataToUpload: UploadKaraoke = {
       title: karaokeParams.title,
@@ -128,6 +126,10 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
       vocalRef: vocalsRef.fullPath
     }
 
+    console.log("Current user:", getAuth().currentUser?.uid);
+    console.log("Attempting to save data:", dataToUpload);
+    try{
+    
     await Promise.all([
       uploadBytes(vocalsRef, vocalBlob).then(() => {
         console.log('Uploaded vocals to storage');
@@ -136,10 +138,14 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         console.log('Uploaded accompaniment to storage');
       })
     ]).then(async () => {
-      await setDoc(karaokeDocRef, dataToUpload).then(() => {
+      await addDoc(collection(db, 'SavedKaraokes'), dataToUpload).then(() => {
         console.log("Document written with ID: ", karaokeParams.title);
       })
     })
+  }
+  catch (error) {
+    console.error("Error adding document: ", error);
+  }
 
 
   }
