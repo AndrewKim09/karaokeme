@@ -17,7 +17,6 @@ const firebaseConfig = {
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const analytics = getAnalytics(app);
 
 root.render(
   <App />

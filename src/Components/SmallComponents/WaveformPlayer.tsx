@@ -1,19 +1,39 @@
 import React, { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
-import { Option, Select, Typography } from "@mui/joy";
+import { Input, Modal, Option, Select, Typography } from "@mui/joy";
 import { Button } from "@mui/joy";
 import {Box} from "@mui/joy";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPause, faPlay, faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import { faPause, faPlay, faSave, faVolumeHigh, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { LyricDisplay } from "./LyricDisplay";
 import WaveformRecorder from "./WaveformRecorder";
 import { VideoGenerator } from "./VideoGenerator";
+import { getAuth } from "firebase/auth";
+
+
+
+type UploadKaraokeParams = {
+  title: string;
+  lyrics: Segment[];
+  date: Date;
+  user: string;
+}
 
 interface WaveformPlayerProps {
   vocalFile: string;
   instrumentalFile: string;
   lyrics: Segment[]
+  setVocalBlob: (blob: Blob) => void; //FOR STORING TO FIREBASE
+  setInstrumentalBlob: (blob: Blob) => void; //FOR STORING TO FIREBASE
+  SaveKaraokeToFirestore: (karaokeParams: UploadKaraokeParams) => void; //FOR STORING TO FIREBASE
 }
+
+
+type Segment = {
+  start: number;
+  end: number;
+  text: string;
+};
 
 const isValidUrl = (url: string) => {
   try {
@@ -59,13 +79,7 @@ const formatTime = (seconds: number) => {
   return date.toISOString().substr(11, 8)
 }
 
-type Segment = {
-  start: number;
-  end: number;
-  text: string;
-};
-
-const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumentalFile, lyrics }) => {
+const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumentalFile, lyrics, setVocalBlob, setInstrumentalBlob, SaveKaraokeToFirestore }) => {
   const vocalWaveformRef = useRef<HTMLDivElement>(null);
   const vocalWaveSurfer = useRef<WaveSurfer | null>(null);
   const instrumentalWaveformRef = useRef<HTMLDivElement>(null);
@@ -89,6 +103,18 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   const [vocalBlobUrl, setVocalBlobUrl] = useState<string | null>(null);
   const [audioBlobsLoaded, setAudioBlobsLoaded] = useState(false);
 
+  const [saveKaraokeModalOpen, setSaveKaraokeModalOpen] = useState(false);
+  const [title, setTitle] = useState<string>("");
+
+  const user = useRef<string | null>(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    if (auth.currentUser) {
+      user.current = auth.currentUser.uid;
+    }
+  }, [])
+
   useEffect(() => {
     const fetchAudio = async () => {
       try{
@@ -98,11 +124,13 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
         const vocalResponse = await fetch(vocalFile);
         const vocalBlob = await vocalResponse.blob();
+        setVocalBlob(vocalBlob); //FOR STORING TO FIREBASE
         const vocalUrl = URL.createObjectURL(vocalBlob);
         setVocalBlobUrl(vocalUrl);
   
         const instrumentalResponse = await fetch(instrumentalFile);
         const instrumentalBlob = await instrumentalResponse.blob();
+        setInstrumentalBlob(instrumentalBlob); //FOR STORING TO FIREBASE
         const instrumentalUrl = URL.createObjectURL(instrumentalBlob);
         setInstrumentalBlobUrl(instrumentalUrl);
         console.log("Audio data fetched successfully.");
@@ -289,17 +317,54 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       changeAudioOutput(instrumentalAudioRef.current, instrumentalOutput);
     }
   }, [vocalOutput, instrumentalOutput]);
+
+  const handleSaveKaraoke = () => {
+    if(!title || !user.current) return;
+    console.log("Saving karaoke with title:", title);
+    SaveKaraokeToFirestore({ title, lyrics, date: new Date(), user: user.current});
+    setSaveKaraokeModalOpen(false);
+  }
+
   
 
   return (
-    <Box sx={{ textAlign: "center", width: 'fit-content', }}>
+    <Box sx={{ textAlign: "center", width: 'fit-content', maxWidth: '100vw'}}>
+
+      <Modal open={saveKaraokeModalOpen} onClose={() => setSaveKaraokeModalOpen(false)} >
+        <div className="absolute flex flex-col items-center justify-center gap-4 transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+          <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Button onClick={() => handleSaveKaraoke()} variant="solid" color="primary">
+            Save
+          </Button>
+        </div>  
+      </Modal>
 
       <LyricDisplay lyrics={lyrics} time={currentTime} setTime={setTime} playing={playing} duration={duration} handlePause={handlePause} handlePlay={handlePlay}/>
       <span>
         {formatTime(currentTime)} <br/>
       </span>
 
-      <div className="flex items-center justify-center gap-2">
+      <div className="grid items-center justify-center grid-cols-3 gap-2 w-[100%]">
+        {user.current ?
+          <Button variant="outlined"
+            onClick={() => setSaveKaraokeModalOpen(true)}
+            sx={(theme) => ({
+            textAlign: 'center',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 2,
+            width: '80%',
+            minWidth: 'fit-content',
+            justifySelf: 'center',
+          })}
+        >
+          Save To Account
+          <FontAwesomeIcon icon={faSave}/>
+        </Button>
+        :
+        <div/>
+        }
       <Button 
         onClick={handlePlayPause} 
         className="h-10 text-xl "
@@ -311,7 +376,10 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           '&:hover': {
             backgroundColor: theme.palette.primary.outlinedColor,
             color: theme.palette.success.solidDisabledBg,
-          }
+          },
+          width: '30%',
+          minWidth: 'fit-content',
+          justifySelf: 'center',
         })}
       >
           <FontAwesomeIcon icon={playing ? faPause : faPlay} />

@@ -13,6 +13,7 @@ export const HomePage = () => {
         '& > div': {
           scrollSnapAlign: 'start',
         },
+        maxWidth: '100vw',
       }}
     >
       <HomePageBlock1/>

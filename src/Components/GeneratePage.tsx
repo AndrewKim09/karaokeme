@@ -1,13 +1,17 @@
 
-import { faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Alert, Box, CircularProgress, Dropdown, Link, MenuButton, Modal, Typography} from '@mui/joy'
+import { Alert, Box, Button, CircularProgress, Drawer, Dropdown, Link, MenuButton, Modal, Typography} from '@mui/joy'
 import React, { useEffect, useRef, useState } from 'react'
 import { TermsAndService } from './SmallComponents/TermsAndService'
 import { Tracks } from './SmallComponents/Tracks'
 import gsap from 'gsap'
 import WaveformPlayer from './SmallComponents/WaveformPlayer'
 import { LyricDisplay } from './SmallComponents/LyricDisplay'
+import { collection, getFirestore } from "firebase/firestore";
+import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { doc, setDoc, Timestamp } from "firebase/firestore"; 
+
 
 type Segment = {
   start: number;
@@ -15,7 +19,28 @@ type Segment = {
   text: string;
 };
 
-export const GeneratePage = () => {
+type UploadKaraokeParams = {
+  title: string;
+  lyrics: Segment[];
+  date: Date;
+  user: string;
+}
+
+type UploadKaraoke = {
+  title: string;
+  lyrics: Segment[];
+  date: Date;
+  user: string;
+  instrumentalRef: string
+  vocalRef: string
+}
+
+type GeneratePageProps = {
+  db: ReturnType<typeof getFirestore>;
+  storage: ReturnType<typeof getStorage>;
+}
+
+export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const wrongFileNotificationRef = useRef<HTMLDivElement>(null);
   const [openModal, setOpenModal] = useState(false);
@@ -29,6 +54,13 @@ export const GeneratePage = () => {
   const handleOpen = () => setOpenModal(true);
   const handleClose = () => setOpenModal(false);
 
+  const [vocalBlob, setVocalBlob] = useState<Blob | null>(null);
+  const [instrumentalBlob, setInstrumentalBlob] = useState<Blob | null>(null);
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const karaokeUploadParams = useRef<UploadKaraokeParams>({title: '', lyrics: [], date: new Date(), user: ''});
+
   // useEffect(() => {
   //   const fetchData = async () => {
   //     setAccompaniment(`${window.location.origin}/accompaniment.wav`);
@@ -36,7 +68,6 @@ export const GeneratePage = () => {
   //   };
   //   fetchData().then(() => console.log("Data fetched"));
   // }, []);
-
 
   async function uploadFile(file: File) {
     const formData = new FormData();
@@ -65,6 +96,52 @@ export const GeneratePage = () => {
       console.error("Error uploading file:", error);
       setProcessing(false);
     }
+  }
+
+  const SaveKaraokeToFirestore = async (karaokeParams: UploadKaraokeParams) => {
+    if(!karaokeParams.title || !karaokeParams.lyrics || !karaokeParams.date || !karaokeParams.user) {
+      console.error("Missing required karaoke data.");
+      return;
+    }
+    if(!vocalBlob){
+      console.error("No vocal blob available to upload.");
+      return;
+    }
+    if(!instrumentalBlob){
+      console.error("No instrumental blob available to upload.");
+      return;
+    }
+    const vocalsRef = ref(storage, `${karaokeParams.title}/vocals.wav`)
+
+    const instrumentalRef = ref(storage, `${karaokeParams.title}/accompaniment.wav`)
+    
+    const karaokeCollection = collection(db, 'SavedKaraokes')
+    const karaokeDocRef = doc(karaokeCollection, karaokeParams.title)
+    
+    
+    const dataToUpload: UploadKaraoke = {
+      title: karaokeParams.title,
+      lyrics: karaokeParams.lyrics,
+      date: karaokeParams.date,
+      user: karaokeParams.user,
+      instrumentalRef: instrumentalRef.fullPath,
+      vocalRef: vocalsRef.fullPath
+    }
+
+    await Promise.all([
+      uploadBytes(vocalsRef, vocalBlob).then(() => {
+        console.log('Uploaded vocals to storage');
+      }),
+      uploadBytes(instrumentalRef, instrumentalBlob).then(() => {
+        console.log('Uploaded accompaniment to storage');
+      })
+    ]).then(async () => {
+      await setDoc(karaokeDocRef, dataToUpload).then(() => {
+        console.log("Document written with ID: ", karaokeParams.title);
+      })
+    })
+
+
   }
 
   const checkFileType = (file: File) => {
@@ -137,6 +214,20 @@ export const GeneratePage = () => {
 
   return (
     <Box display='flex' flexDirection={'column'} alignItems={'center'} minHeight={'100vh'} height={'fit-content'}>
+      <Button 
+        onClick={() => setSidebarOpen(!sidebarOpen)} variant='outlined'
+        sx={(theme) => ({
+          top: '10px',
+          left: '10px',
+          position: 'fixed',
+          zIndex: 500,
+        })}
+      >
+        <FontAwesomeIcon icon={faBars} className='text-gray-600 hover:text-black' />
+      </Button>
+      <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} sx={{ zIndex: 1000 }}>
+        <button>awdawd</button>
+      </Drawer>
       <Alert
         ref={wrongFileNotificationRef}
         color='danger'
@@ -145,7 +236,6 @@ export const GeneratePage = () => {
         sx={(theme) => ({
           position: 'absolute',
           top: '10px',
-          left: '10px',
           opacity: 0,
         })}
       >
@@ -232,7 +322,7 @@ export const GeneratePage = () => {
         </Box>
       </Modal>
 
-      {(accompaniment && vocal && lyrics) && <WaveformPlayer instrumentalFile={accompaniment} vocalFile={vocal} lyrics={lyrics}/>}
+      {(accompaniment && vocal && lyrics) && <WaveformPlayer SaveKaraokeToFirestore={SaveKaraokeToFirestore} instrumentalFile={accompaniment} vocalFile={vocal} lyrics={lyrics} setVocalBlob={setVocalBlob} setInstrumentalBlob={setInstrumentalBlob} />}
     </Box>
   );
 };

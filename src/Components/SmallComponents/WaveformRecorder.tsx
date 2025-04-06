@@ -45,10 +45,9 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
   }, [recordedAudioRef.current?.src])
 
   useEffect(() => {
+    console.log("Playing:", playing)
     if(!playing){
-      recorderWaveSurfer.current?.pause();
-      recordedAudioRef.current?.pause();
-      setIsPlaying(false);
+      toggleRecording();
     }
   }, [playing])
 

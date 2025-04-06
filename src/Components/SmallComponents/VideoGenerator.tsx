@@ -116,7 +116,7 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
   return (
     <div>
       <canvas ref={canvasRef} width={1280} height={720} hidden />
-      <Button onClick={generateVideo} disabled={loading || !isFFmpegReady} 
+      <Button onClick={generateVideo} disabled={loading || !isFFmpegReady} variant="outlined" color="primary"
         sx={(theme) => ({
           color: theme.palette.text.primary,
           background: 'none',
