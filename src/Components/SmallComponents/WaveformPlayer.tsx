@@ -123,14 +123,17 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         if(!isValidUrl(vocalFile) || !isValidUrl(instrumentalFile)) return;
 
         const vocalResponse = await fetch(vocalFile);
+        console.log("Vocal response:", vocalResponse);
         const vocalBlob = await vocalResponse.blob();
         setVocalBlob(vocalBlob); //FOR STORING TO FIREBASE
+        console.log("Vocal file size:", (vocalBlob.size / 1024 / 1024).toFixed(2), "MB");
         const vocalUrl = URL.createObjectURL(vocalBlob);
         setVocalBlobUrl(vocalUrl);
   
         const instrumentalResponse = await fetch(instrumentalFile);
         const instrumentalBlob = await instrumentalResponse.blob();
         setInstrumentalBlob(instrumentalBlob); //FOR STORING TO FIREBASE
+        console.log("instrumental file size:", (instrumentalBlob.size / 1024 / 1024).toFixed(2), "MB");
         const instrumentalUrl = URL.createObjectURL(instrumentalBlob);
         setInstrumentalBlobUrl(instrumentalUrl);
         console.log("Audio data fetched successfully.");

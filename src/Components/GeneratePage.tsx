@@ -8,11 +8,12 @@ import { Tracks } from './SmallComponents/Tracks'
 import gsap from 'gsap'
 import WaveformPlayer from './SmallComponents/WaveformPlayer'
 import { LyricDisplay } from './SmallComponents/LyricDisplay'
-import { addDoc, collection, getFirestore } from "firebase/firestore";
-import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { addDoc, collection, getFirestore, onSnapshot, query, where } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { doc, setDoc, Timestamp } from "firebase/firestore"; 
 import { getAuth } from 'firebase/auth'
-
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util'
 
 type Segment = {
   start: number;
@@ -60,7 +61,11 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const karaokeUploadParams = useRef<UploadKaraokeParams>({title: '', lyrics: [], date: new Date(), user: ''});
+  const userSavedKaraokes = useRef<UploadKaraoke[]>([]);
+
+  const [selectedSavedKaraoke, setSelectedSavedKaraoke] = useState<UploadKaraoke | null>(null);
+  
+  const ffmpegRef = useRef<FFmpeg | null>(null);
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -69,6 +74,73 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
   //   };
   //   fetchData().then(() => console.log("Data fetched"));
   // }, []);
+
+  
+  useEffect(() => {
+    const dropArea = document.getElementById('dropArea');
+    if (dropArea) {
+      dropArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropArea.classList.add('dragover');
+      });
+
+      dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('dragover');
+      });
+
+      dropArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropArea.classList.remove('dragover');
+        const file = event.dataTransfer?.files?.[0];
+        if (file) checkFileType(file);
+      });
+    }
+
+    try{
+      const karaokesRef = collection(db, 'SavedKaraokes')
+      const q = query(karaokesRef, where('user', '==', getAuth().currentUser?.uid))
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        userSavedKaraokes.current = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            lyrics: data.lyrics,
+            date: data.date.toDate(), // Assuming `date` is a Firestore Timestamp
+            user: data.user,
+            instrumentalRef: data.instrumentalRef,
+            vocalRef: data.vocalRef,
+          } as UploadKaraoke;
+        });
+        console.log("Current user saved karaokes:", userSavedKaraokes.current);
+      });
+      
+      return () => {
+        unsubscribe(); // Cleanup the listener on component unmount
+        setSelectedSavedKaraoke(null); // Reset selected karaoke when component unmounts
+        userSavedKaraokes.current = []; // Clear the saved karaokes
+      } // Cleanup the listener on component unmount
+    }
+    catch (error) {
+      console.error("Error:", error);
+    }
+
+  }, []);
+
+  useEffect(() => {
+    if (selectedSavedKaraoke) {
+      console.log("Selected karaoke:", selectedSavedKaraoke);
+      setAccompaniment(selectedSavedKaraoke.instrumentalRef);
+      setVocal(selectedSavedKaraoke.vocalRef);
+      setLyrics(selectedSavedKaraoke.lyrics);
+
+    } else {
+      setAccompaniment(null);
+      setVocal(null);
+      setLyrics(null);
+    }
+
+  }, [selectedSavedKaraoke]);
 
   async function uploadFile(file: File) {
     const formData = new FormData();
@@ -116,6 +188,19 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
 
     const instrumentalRef = ref(storage, `${karaokeParams.title}/accompaniment.wav`)
     
+    if(ffmpegRef.current === null) { //lazy initialization of ffmpeg
+      ffmpegRef.current = new FFmpeg();
+      await ffmpegRef.current.load();
+      console.log("FFmpeg is loaded");
+    }
+
+    (ffmpegRef.current as any).FS('writeFile', 'vocals.wav', await fetchFile(vocalBlob));
+    (ffmpegRef.current as any).FS('writeFile', 'accompaniment.wav', await fetchFile(instrumentalBlob));
+
+    const mp3VocalData = (ffmpegRef.current as any).FS('readFile', 'vocals.wav');
+    const mp3InstrumentalData = (ffmpegRef.current as any).FS('readFile', 'accompaniment.wav');
+    const mp3Blob = new Blob([mp3VocalData.buffer], { type: 'audio/mpeg' });
+    const mp3InstrumentalBlob = new Blob([mp3InstrumentalData.buffer], { type: 'audio/mpeg' });
     
     const dataToUpload: UploadKaraoke = {
       title: karaokeParams.title,
@@ -128,24 +213,25 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
 
     console.log("Current user:", getAuth().currentUser?.uid);
     console.log("Attempting to save data:", dataToUpload);
+
     try{
     
-    await Promise.all([
-      uploadBytes(vocalsRef, vocalBlob).then(() => {
-        console.log('Uploaded vocals to storage');
-      }),
-      uploadBytes(instrumentalRef, instrumentalBlob).then(() => {
-        console.log('Uploaded accompaniment to storage');
+      await Promise.all([
+        uploadBytes(vocalsRef, mp3Blob).then(() => {
+          console.log('Uploaded vocals to storage');
+        }),
+        uploadBytes(instrumentalRef, mp3InstrumentalBlob).then(() => {
+          console.log('Uploaded accompaniment to storage');
+        })
+      ]).then(async () => {
+        await addDoc(collection(db, 'SavedKaraokes'), dataToUpload).then(() => {
+          console.log("Document written with ID: ", karaokeParams.title);
+        })
       })
-    ]).then(async () => {
-      await addDoc(collection(db, 'SavedKaraokes'), dataToUpload).then(() => {
-        console.log("Document written with ID: ", karaokeParams.title);
-      })
-    })
-  }
-  catch (error) {
-    console.error("Error adding document: ", error);
-  }
+    }
+    catch (error) {
+      console.error("Error adding document: ", error);
+    }
 
 
   }
@@ -182,27 +268,6 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     });
   }
 
-  useEffect(() => {
-    const dropArea = document.getElementById('dropArea');
-    if (dropArea) {
-      dropArea.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        dropArea.classList.add('dragover');
-      });
-
-      dropArea.addEventListener('dragleave', () => {
-        dropArea.classList.remove('dragover');
-      });
-
-      dropArea.addEventListener('drop', (event) => {
-        event.preventDefault();
-        dropArea.classList.remove('dragover');
-        const file = event.dataTransfer?.files?.[0];
-        if (file) checkFileType(file);
-      });
-    }
-  }, []);
-
   const handleFileSelect = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; // Reset the input
@@ -218,6 +283,21 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     }
   };
 
+  const onSavedKaraokeClick = (karaoke: UploadKaraoke) => {
+    const instrumentalRef = ref(storage, karaoke.instrumentalRef);
+    const vocalRef = ref(storage, karaoke.vocalRef);
+
+    getDownloadURL(instrumentalRef).then((url) => {
+      setAccompaniment(url);
+    })
+
+    getDownloadURL(vocalRef).then((url) => {
+      setVocal(url);
+    })
+
+    setLyrics(karaoke.lyrics);
+  }
+
   return (
     <Box display='flex' flexDirection={'column'} alignItems={'center'} minHeight={'100vh'} height={'fit-content'}>
       <Button 
@@ -232,7 +312,23 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         <FontAwesomeIcon icon={faBars} className='text-gray-600 hover:text-black' />
       </Button>
       <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} sx={{ zIndex: 1000 }}>
-        <button>awdawd</button>
+        <div className='flex flex-col gap-2 p-4 w-[100%] h-[100%]'>
+          <Typography level='h3' textAlign={'center'}>Saved Karaokes</Typography>
+          {userSavedKaraokes.current.map((karaoke, index) => (
+            <SavedKarokeItem karaoke={karaoke} key={index} onSavedKaraokeClick={onSavedKaraokeClick} />
+          ))}
+          <Button onClick={() => setSidebarOpen(false)} variant='outlined' sx={(theme) => ({
+            backgroundColor: theme.palette.primary.outlinedActiveBg,
+            color: theme.palette.primary.softColor,
+            '&:hover': {
+              backgroundColor: theme.palette.primary.outlinedColor,
+              color: theme.palette.success.solidDisabledBg,
+            },
+            width: '100%',
+          })}>
+            Close
+          </Button>
+        </div>
       </Drawer>
       <Alert
         ref={wrongFileNotificationRef}
@@ -332,3 +428,25 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     </Box>
   );
 };
+
+function SavedKarokeItem({karaoke, onSavedKaraokeClick}: {karaoke: UploadKaraoke, onSavedKaraokeClick: (karaoke: UploadKaraoke) => void}) {
+  return (
+    <Button
+      onClick={() => {onSavedKaraokeClick(karaoke)}}
+      variant='outlined'
+      sx={(theme) => ({
+        backgroundColor: theme.palette.primary.outlinedActiveBg,
+        color: theme.palette.primary.softColor,
+        '&:hover': {
+          backgroundColor: theme.palette.primary.outlinedColor,
+          color: theme.palette.success.solidDisabledBg,
+        },
+        width: '100%',
+      })}
+    >
+      {karaoke.title}
+    </Button>
+  )
+}
+
+
