@@ -1,15 +1,18 @@
 import React from 'react'
 import '../../GoogleSignInButtonStyle.css';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 export const GoogleSignInButton = () => {
   const provider = new GoogleAuthProvider();
+  const navigate = useNavigate();
   const auth = getAuth();
   const handleGoogleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
   
       if (auth.currentUser) {
+        navigate("/generate");
         console.log("Already signed in:", auth.currentUser);
         return;
       }

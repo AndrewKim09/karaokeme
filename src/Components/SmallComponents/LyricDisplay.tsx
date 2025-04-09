@@ -119,6 +119,7 @@ export const LyricDisplay: React.FC<LyricDisplayProps> = ({ lyrics, time, setTim
         right: expanded ? '0' : 'auto',
         zIndex: expanded ? 500 : 'auto',
         scrollbarColor: `${theme.palette.primary.plainColor} ${theme.palette.background.level1}`,
+        marginX: 'auto'
       })}
     >
       <Box className='sticky top-0 z-50 flex'

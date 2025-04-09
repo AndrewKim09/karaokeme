@@ -1,5 +1,5 @@
 
-import { faBars, faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faBars, faExclamationCircle, faMicrophone, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Alert, Box, Button, CircularProgress, Drawer, Dropdown, Link, MenuButton, Modal, Typography} from '@mui/joy'
 import React, { useEffect, useRef, useState } from 'react'
@@ -319,16 +319,24 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
           {userSavedKaraokes.current.map((karaoke, index) => (
             <SavedKarokeItem karaoke={karaoke} key={index} onSavedKaraokeClick={onSavedKaraokeClick} />
           ))}
-          <Button onClick={() => setSidebarOpen(false)} variant='outlined' sx={(theme) => ({
-            backgroundColor: theme.palette.primary.outlinedActiveBg,
+          <Button  
+            variant='soft' 
+            color='info'
+            onClick={() => {
+              setSidebarOpen(false);
+              setAccompaniment(null);
+              setVocal(null);
+              setLyrics(null);
+            }}
+          >
+            + Generate New Karaoke
+          </Button>
+          <Button onClick={() => setSidebarOpen(false)} variant='soft' color='neutral' sx={(theme) => ({
             color: theme.palette.primary.softColor,
-            '&:hover': {
-              backgroundColor: theme.palette.primary.outlinedColor,
-              color: theme.palette.success.solidDisabledBg,
-            },
-            width: '100%',
+            width: 'fit-content',
+            marginTop: 'auto',
           })}>
-            Close
+            <FontAwesomeIcon icon={faArrowLeft} className='mr-2 text-gray-600 hover:text-black' /> Close
           </Button>
         </div>
       </Drawer>
@@ -420,7 +428,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
           })}
         >
           <TermsAndService />
-          <Link component="button" onClick={handleClose} style={{ cursor: 'pointer', color: 'red', marginTop: 20 }} >
+          <Link component="button" onClick={handleClose} style={{ cursor: 'pointer', color: 'red', marginTop: 20}} >
             Close
           </Link>
         </Box>

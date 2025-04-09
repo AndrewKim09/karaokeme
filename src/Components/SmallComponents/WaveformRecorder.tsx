@@ -311,22 +311,24 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
         <Typography level="body-xs">Volume: {Math.round(recordedVolume * 100)}%</Typography>
       </div>
       <div className="flex items-center w-[100%] h-[70px] max-w-[80vw]">
-        <div className="flex flex-col controls h-[100%] mt-4 mr-4">
-          <input
-            className="audio-slider"
-            type='range'
-            id='volume'
-            name='volume'
-            min='0'
-            max='1'
-            step='0.05'
-            onChange={(e) => handleRecordedVolumeChange(parseFloat(e.target.value))}
-            value={recordedMuted ? 0 : recordedVolume}
-          />
-          <button onClick={handleRecordedMute}>
-            <FontAwesomeIcon icon={!recordedMuted ? faVolumeHigh : faVolumeMute} />
-          </button>
-        </div>
+        {recordedBlob.current && 
+          <div className="flex flex-col controls h-[100%] mt-4 mr-4">
+            <input
+              className="audio-slider"
+              type='range'
+              id='volume'
+              name='volume'
+              min='0'
+              max='1'
+              step='0.05'
+              onChange={(e) => handleRecordedVolumeChange(parseFloat(e.target.value))}
+              value={recordedMuted ? 0 : recordedVolume}
+            />
+            <button onClick={handleRecordedMute}>
+              <FontAwesomeIcon icon={!recordedMuted ? faVolumeHigh : faVolumeMute} />
+            </button>
+          </div>
+        }
         <div id="waveform" ref={waveformRef} className="my-4 w-[100%] overflow-auto"></div>
       </div>
 

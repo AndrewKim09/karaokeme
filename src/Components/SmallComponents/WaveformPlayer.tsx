@@ -353,7 +353,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   
 
   return (
-    <Box sx={{ textAlign: "center", width: 'fit-content', maxWidth: '100vw'}}>
+    <Box sx={{ textAlign: "center", width: 'fit-content', maxWidth: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
       <Modal open={saveKaraokeModalOpen} onClose={() => setSaveKaraokeModalOpen(false)} >
         <div className="absolute flex flex-col items-center justify-center gap-4 transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
