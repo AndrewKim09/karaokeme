@@ -24,7 +24,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
   // const timeStartedAt = useRef<number>(0);
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [playable, setPlayable] = useState(false);
 
   const [recordingDevices, setRecordingDevices] = useState<MediaDeviceInfo[]>([])
@@ -46,7 +46,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
 
   useEffect(() => {
     console.log("Playing:", playing)
-    if(!playing){
+    if(isRecording && !playing){
       toggleRecording();
     }
   }, [playing])
@@ -150,12 +150,12 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
         // Update state
         setTime(0);
         setPlayable(true);
-        setIsPlaying(false);
+        setIsRecording(false);
     
       } catch (error) {
         console.error("Error handling recording:", error);
         setPlayable(false);
-        setIsPlaying(false);
+        setIsRecording(false);
       }
     });
 
@@ -201,7 +201,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
       console.log("Audio ended");
       recordedAudioRef.current?.pause();
       handlePause();
-      setIsPlaying(false);
+      setIsRecording(false);
     })
 
     return () => {
@@ -262,7 +262,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
     if (!recorderWaveSurfer.current || !playable || !recordedAudioRef.current) return;
     recorderWaveSurfer.current.playPause();
     console.log("recorder wave surfer time:", recorderWaveSurfer.current.getCurrentTime())
-    if(!isPlaying){
+    if(!isRecording){
       recordedAudioRef.current.src = recordedAudioURL.current || "";
       recordedAudioRef.current.load()
 
@@ -278,7 +278,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
       handlePause();
       recordedAudioRef.current.pause();
     }
-    setIsPlaying(!isPlaying);
+    setIsRecording(!isRecording);
   };
 
   const handleRecordedVolumeChange = (newVolume: number) => {
@@ -300,7 +300,7 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
     if(!playing){
       recorderWaveSurfer.current?.pause();
       recordedAudioRef.current?.pause();
-      setIsPlaying(false);
+      setIsRecording(false);
     }
   })
 
@@ -357,8 +357,8 @@ const WaveformRecorder: React.FC<recorderParams> = ({setTime, handlePlay, handle
       {playable && !recording && (
         <button onClick={togglePlayback} className="my-4 ml-2 text-lg">
           <FontAwesomeIcon
-            className={isPlaying ? "text-black" : "text-blue-500"}
-            icon={isPlaying ? faPause : faPlay}
+            className={isRecording ? "text-black" : "text-blue-500"}
+            icon={isRecording ? faPause : faPlay}
           />
         </button>
       )}
