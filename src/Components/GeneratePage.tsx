@@ -288,10 +288,12 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     const vocalRef = ref(storage, karaoke.vocalRef);
 
     getDownloadURL(instrumentalRef).then((url) => {
+      console.log("Instrumental URL:", url);
       setAccompaniment(url);
     })
 
     getDownloadURL(vocalRef).then((url) => {
+      console.log("Vocal URL:", url);
       setVocal(url);
     })
 

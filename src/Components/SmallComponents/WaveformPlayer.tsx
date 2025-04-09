@@ -118,11 +118,15 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
   useEffect(() => {
     const fetchAudio = async () => {
       try{
-        if(vocalBlobUrl && instrumentalBlobUrl) return;
-        if(!vocalFile || !instrumentalFile || audioBlobsLoaded) return;
-        if(!isValidUrl(vocalFile) || !isValidUrl(instrumentalFile)) return;
 
-        const vocalResponse = await fetch(vocalFile);
+        console.log(vocalFile, instrumentalFile);
+
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken(true);
+        const headers = new Headers();
+        headers.append("Authorization", `Bearer ${token}`);
+
+        const vocalResponse = await fetch(vocalFile, { headers });
         console.log("Vocal response:", vocalResponse);
         const vocalBlob = await vocalResponse.blob();
         setVocalBlob(vocalBlob); //FOR STORING TO FIREBASE
@@ -130,7 +134,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         const vocalUrl = URL.createObjectURL(vocalBlob);
         setVocalBlobUrl(vocalUrl);
   
-        const instrumentalResponse = await fetch(instrumentalFile);
+        const instrumentalResponse = await fetch(instrumentalFile, { headers });
         const instrumentalBlob = await instrumentalResponse.blob();
         setInstrumentalBlob(instrumentalBlob); //FOR STORING TO FIREBASE
         console.log("instrumental file size:", (instrumentalBlob.size / 1024 / 1024).toFixed(2), "MB");
@@ -144,7 +148,25 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       }
     }
 
-    fetchAudio();
+    const FetchFirebaseAudio = async () => {
+      setVocalBlobUrl(vocalFile);
+      setInstrumentalBlobUrl(instrumentalFile);
+      setAudioBlobsLoaded(true);
+    }
+
+
+    if(vocalBlobUrl && instrumentalBlobUrl) return;
+    if(!vocalFile || !instrumentalFile || audioBlobsLoaded) return;
+    if(!isValidUrl(vocalFile) || !isValidUrl(instrumentalFile)) return;
+    if(!user.current) return;
+
+    if(vocalFile.includes("firebase") && instrumentalFile.includes("firebase")){
+      FetchFirebaseAudio();
+      return;
+    }
+    else{
+      fetchAudio();
+    }
   }, [vocalFile, instrumentalFile])
   
 
