@@ -35,6 +35,7 @@ type UploadKaraoke = {
   user: string;
   instrumentalRef: string
   vocalRef: string
+  id: string;
 }
 
 type GeneratePageProps = {
@@ -127,21 +128,6 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
 
   }, []);
 
-  useEffect(() => {
-    if (selectedSavedKaraoke) {
-      console.log("Selected karaoke:", selectedSavedKaraoke);
-      setAccompaniment(selectedSavedKaraoke.instrumentalRef);
-      setVocal(selectedSavedKaraoke.vocalRef);
-      setLyrics(selectedSavedKaraoke.lyrics);
-
-    } else {
-      setAccompaniment(null);
-      setVocal(null);
-      setLyrics(null);
-    }
-
-  }, [selectedSavedKaraoke]);
-
   async function uploadFile(file: File) {
     const formData = new FormData();
     formData.append("file", file);
@@ -176,63 +162,79 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
       console.error("Missing required karaoke data.");
       return;
     }
-    if(!vocalBlob){
-      console.error("No vocal blob available to upload.");
-      return;
-    }
-    if(!instrumentalBlob){
-      console.error("No instrumental blob available to upload.");
-      return;
-    }
-    const vocalsRef = ref(storage, `${karaokeParams.title}/vocals.wav`)
+    if(!vocal?.includes("firebase") || !accompaniment?.includes("firebase")) {
+      if(!vocalBlob){
+        console.error("No vocal blob available to upload.");
+        return;
+      }
+      if(!instrumentalBlob){
+        console.error("No instrumental blob available to upload.");
+        return;
+      }
+      const vocalsRef = ref(storage, `${karaokeParams.title}/vocals.wav`)
 
-    const instrumentalRef = ref(storage, `${karaokeParams.title}/accompaniment.wav`)
-    
-    if(ffmpegRef.current === null) { //lazy initialization of ffmpeg
-      ffmpegRef.current = new FFmpeg();
-      await ffmpegRef.current.load();
-      console.log("FFmpeg is loaded");
-    }
+      const instrumentalRef = ref(storage, `${karaokeParams.title}/accompaniment.wav`)
+      
+      if(ffmpegRef.current === null) { //lazy initialization of ffmpeg
+        ffmpegRef.current = new FFmpeg();
+        await ffmpegRef.current.load();
+        console.log("FFmpeg is loaded");
+      }
 
-    (ffmpegRef.current as any).FS('writeFile', 'vocals.wav', await fetchFile(vocalBlob));
-    (ffmpegRef.current as any).FS('writeFile', 'accompaniment.wav', await fetchFile(instrumentalBlob));
+      (ffmpegRef.current as any).FS('writeFile', 'vocals.wav', await fetchFile(vocalBlob));
+      (ffmpegRef.current as any).FS('writeFile', 'accompaniment.wav', await fetchFile(instrumentalBlob));
 
-    const mp3VocalData = (ffmpegRef.current as any).FS('readFile', 'vocals.wav');
-    const mp3InstrumentalData = (ffmpegRef.current as any).FS('readFile', 'accompaniment.wav');
-    const mp3Blob = new Blob([mp3VocalData.buffer], { type: 'audio/mpeg' });
-    const mp3InstrumentalBlob = new Blob([mp3InstrumentalData.buffer], { type: 'audio/mpeg' });
-    
-    const dataToUpload: UploadKaraoke = {
-      title: karaokeParams.title,
-      lyrics: karaokeParams.lyrics,
-      date: karaokeParams.date,
-      user: karaokeParams.user,
-      instrumentalRef: instrumentalRef.fullPath,
-      vocalRef: vocalsRef.fullPath
-    }
+      const mp3VocalData = (ffmpegRef.current as any).FS('readFile', 'vocals.wav');
+      const mp3InstrumentalData = (ffmpegRef.current as any).FS('readFile', 'accompaniment.wav');
+      const mp3Blob = new Blob([mp3VocalData.buffer], { type: 'audio/mpeg' });
+      const mp3InstrumentalBlob = new Blob([mp3InstrumentalData.buffer], { type: 'audio/mpeg' });
+      
+      const dataToUpload: UploadKaraoke = {
+        title: karaokeParams.title,
+        lyrics: karaokeParams.lyrics,
+        date: karaokeParams.date,
+        user: karaokeParams.user,
+        instrumentalRef: instrumentalRef.fullPath,
+        vocalRef: vocalsRef.fullPath,
+        id: null as any, // Firestore will generate the ID
+      }
 
-    console.log("Current user:", getAuth().currentUser?.uid);
-    console.log("Attempting to save data:", dataToUpload);
+      console.log("Current user:", getAuth().currentUser?.uid);
+      console.log("Attempting to save data:", dataToUpload);
 
-    try{
-    
-      await Promise.all([
-        uploadBytes(vocalsRef, mp3Blob).then(() => {
-          console.log('Uploaded vocals to storage');
-        }),
-        uploadBytes(instrumentalRef, mp3InstrumentalBlob).then(() => {
-          console.log('Uploaded accompaniment to storage');
+      try{
+      
+        await Promise.all([
+          uploadBytes(vocalsRef, mp3Blob).then(() => {
+            console.log('Uploaded vocals to storage');
+          }),
+          uploadBytes(instrumentalRef, mp3InstrumentalBlob).then(() => {
+            console.log('Uploaded accompaniment to storage');
+          })
+        ]).then(async () => {
+          await addDoc(collection(db, 'SavedKaraokes'), dataToUpload).then(() => {
+            console.log("Document written with ID: ", karaokeParams.title);
+          })
         })
-      ]).then(async () => {
-        await addDoc(collection(db, 'SavedKaraokes'), dataToUpload).then(() => {
-          console.log("Document written with ID: ", karaokeParams.title);
-        })
+      }
+      catch (error) {
+        console.error("Error adding document: ", error);
+      }
+    }
+    else{//means user already saved it so only update lyrics
+      try{
+      console.log("Updating lyrics for existing karaoke:", selectedSavedKaraoke?.id);
+      const karaokeRef = doc(db, 'SavedKaraokes', selectedSavedKaraoke?.id || '');
+      await setDoc(karaokeRef, {
+        lyrics: karaokeParams.lyrics,
+      }, { merge: true }).then(() => {
+        console.log("Document updated with ID: ", selectedSavedKaraoke?.id);
       })
+      }
+      catch (error) {
+        console.error("Error updating document: ", error);
+      }
     }
-    catch (error) {
-      console.error("Error adding document: ", error);
-    }
-
 
   }
 
@@ -286,6 +288,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
   const onSavedKaraokeClick = (karaoke: UploadKaraoke) => {
     const instrumentalRef = ref(storage, karaoke.instrumentalRef);
     const vocalRef = ref(storage, karaoke.vocalRef);
+    setSelectedSavedKaraoke(karaoke);
 
     getDownloadURL(instrumentalRef).then((url) => {
       console.log("Instrumental URL:", url);

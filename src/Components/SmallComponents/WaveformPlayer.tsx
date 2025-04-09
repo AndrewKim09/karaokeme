@@ -122,7 +122,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         console.log(vocalFile, instrumentalFile);
 
         const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken(true);
+        const token = await auth.currentUser?.getIdToken();
         const headers = new Headers();
         headers.append("Authorization", `Bearer ${token}`);
 
