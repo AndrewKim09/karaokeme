@@ -11,7 +11,7 @@ import { LyricDisplay } from './SmallComponents/LyricDisplay'
 import { addDoc, collection, getFirestore, onSnapshot, query, where } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { doc, setDoc, Timestamp } from "firebase/firestore"; 
-import { getAuth } from 'firebase/auth'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util'
 
@@ -68,6 +68,8 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
   
   const ffmpegRef = useRef<FFmpeg | null>(null);
 
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
   // useEffect(() => {
   //   const fetchData = async () => {
   //     setAccompaniment(`${window.location.origin}/accompaniment.wav`);
@@ -99,31 +101,49 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
 
     try{
       const karaokesRef = collection(db, 'SavedKaraokes')
-      const q = query(karaokesRef, where('user', '==', getAuth().currentUser?.uid))
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        userSavedKaraokes.current = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title,
-            lyrics: data.lyrics,
-            date: data.date.toDate(), // Assuming `date` is a Firestore Timestamp
-            user: data.user,
-            instrumentalRef: data.instrumentalRef,
-            vocalRef: data.vocalRef,
-          } as UploadKaraoke;
-        });
-        console.log("Current user saved karaokes:", userSavedKaraokes.current);
+      const auth = getAuth();
+      console.log("Current user:", getAuth().currentUser?.uid);
+      const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          const karaokesRef = collection(db, 'SavedKaraokes');
+          const q = query(karaokesRef, where('user', '==', user.uid));
+          
+          const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+            userSavedKaraokes.current = querySnapshot.docs.map((doc) => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                title: data.title,
+                lyrics: data.lyrics,
+                date: data.date.toDate(), // Assuming Firestore Timestamp
+                user: data.user,
+                instrumentalRef: data.instrumentalRef,
+                vocalRef: data.vocalRef,
+              } as UploadKaraoke;
+            });
+    
+            console.log("Current user saved karaokes:", userSavedKaraokes.current);
+          });
+    
+          // Clean up on unmount or user sign-out
+          return () => {
+            unsubscribeSnapshot();
+            setSelectedSavedKaraoke(null);
+            userSavedKaraokes.current = [];
+          };
+        }
       });
       
       return () => {
-        unsubscribe(); // Cleanup the listener on component unmount
+        unsubscribeAuth(); // Cleanup the listener on component unmount
         setSelectedSavedKaraoke(null); // Reset selected karaoke when component unmounts
         userSavedKaraokes.current = []; // Clear the saved karaokes
       } // Cleanup the listener on component unmount
     }
     catch (error) {
       console.error("Error:", error);
+      setAlertMessage(error as string);
+      showAlert();
     }
 
   }, []);
@@ -135,7 +155,8 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     setProcessing(true);
 
     if(file.size > 7 * 1024 * 1024) {
-      showWrongFileNotification();
+      setAlertMessage("size > 7mb, please upload a smaller file");
+      showAlert();
     }
 
     try{
@@ -218,6 +239,8 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         })
       }
       catch (error) {
+        setAlertMessage("Error uploading file to Firestore, Contact Andrewkim09@hotmail.com for help");
+        showAlert();
         console.error("Error adding document: ", error);
       }
     }
@@ -241,15 +264,15 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
   const checkFileType = (file: File) => {
     console.log("Dropped file:", file.name);
     if (file.type !== 'audio/mpeg') {
-      showWrongFileNotification();
-      console.log('Please upload an audio file that is under 7mb');
+      showAlert();
+      setAlertMessage("Please upload a valid mp3 file");
       return;
     } else {
       uploadFile(file);
     }
   }
 
-  const closeWrongFileNotification = () => {
+  const closeAlert = () => {
     gsap.to(wrongFileNotificationRef.current, {
       opacity: 0,
       transform: 'translateY(-20px)',
@@ -258,7 +281,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     )
   }
 
-  const showWrongFileNotification = () => {
+  const showAlert = () => {
     gsap.fromTo(wrongFileNotificationRef.current, {
       opacity: 0,
       transform: 'translateY(-20px)',
@@ -347,14 +370,14 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         ref={wrongFileNotificationRef}
         color='danger'
         startDecorator={<FontAwesomeIcon icon={faExclamationCircle} />}
-        endDecorator={<button onClick={() => closeWrongFileNotification()}><FontAwesomeIcon color='gray' icon={faX} /></button>}
+        endDecorator={<button onClick={() => closeAlert()}><FontAwesomeIcon color='gray' icon={faX} /></button>}
         sx={(theme) => ({
           position: 'absolute',
           top: '10px',
           opacity: 0,
         })}
       >
-        Please upload an audio file
+        {alertMessage}
       </Alert>
       <Typography level='h1' marginTop={'50px'}>Generate <FontAwesomeIcon className='text-yellow-300' icon={faMicrophone} /></Typography>
 
@@ -437,7 +460,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         </Box>
       </Modal>
 
-      {(accompaniment && vocal && lyrics) && <WaveformPlayer SaveKaraokeToFirestore={SaveKaraokeToFirestore} instrumentalFile={accompaniment} vocalFile={vocal} lyrics={lyrics} setVocalBlob={setVocalBlob} setInstrumentalBlob={setInstrumentalBlob} />}
+      {(accompaniment && vocal && lyrics) && <WaveformPlayer SaveKaraokeToFirestore={SaveKaraokeToFirestore} instrumentalFile={accompaniment} vocalFile={vocal} lyrics={lyrics} setVocalBlob={setVocalBlob} setInstrumentalBlob={setInstrumentalBlob} setAlertMessage={setAlertMessage} showAlert={showAlert}/>}
     </Box>
   );
 };

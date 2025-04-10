@@ -26,6 +26,8 @@ interface WaveformPlayerProps {
   setVocalBlob: (blob: Blob) => void; //FOR STORING TO FIREBASE
   setInstrumentalBlob: (blob: Blob) => void; //FOR STORING TO FIREBASE
   SaveKaraokeToFirestore: (karaokeParams: UploadKaraokeParams) => void; //FOR STORING TO FIREBASE
+  setAlertMessage: (message: string) => void; //FOR STORING TO FIREBASE
+  showAlert: () => void; //FOR STORING TO FIREBASE
 }
 
 
@@ -79,7 +81,7 @@ const formatTime = (seconds: number) => {
   return date.toISOString().substr(11, 8)
 }
 
-const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumentalFile, lyrics, setVocalBlob, setInstrumentalBlob, SaveKaraokeToFirestore }) => {
+const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumentalFile, lyrics, setVocalBlob, setInstrumentalBlob, SaveKaraokeToFirestore, setAlertMessage, showAlert }) => {
   const vocalWaveformRef = useRef<HTMLDivElement>(null);
   const vocalWaveSurfer = useRef<WaveSurfer | null>(null);
   const instrumentalWaveformRef = useRef<HTMLDivElement>(null);
@@ -145,6 +147,8 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       }
       catch (error) {
         console.error("Error fetching audio data:", error);
+        setAlertMessage("Error fetching audio data. Please try again.");
+        showAlert();
       }
     }
 
@@ -236,10 +240,10 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       const audioOutputs = devices.filter(device => device.kind === "audiooutput");
 
       setOutputDevices(audioOutputs);
-  
-      console.log("Available audio output devices:", audioOutputs);
     } catch (error) {
       console.error("Permission denied or error accessing media devices", error);
+      setAlertMessage("Permission denied or error accessing media devices");
+      showAlert();
     }
   };
 

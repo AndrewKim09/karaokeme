@@ -56,67 +56,73 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
     const totalFrames = Math.floor(duration * fps);
 
     // Prepare frames
-    console.log("Generating frames...: ", totalFrames);
-    for (let frame = 0; frame < totalFrames; frame++) {
-      const time = frame / fps;
+    try{
+      console.log("Generating frames...: ", totalFrames);
+      for (let frame = 0; frame < totalFrames; frame++) {
+        const time = frame / fps;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "white";
-      ctx.font = "30px Arial";
-      ctx.textAlign = "center";
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center";
 
-      const lyric = lyrics.find((lyric) => time >= lyric.start && time <= lyric.end);
-      if (lyric) ctx.fillText(lyric.text, canvas.width / 2, canvas.height / 2);
+        const lyric = lyrics.find((lyric) => time >= lyric.start && time <= lyric.end);
+        if (lyric) ctx.fillText(lyric.text, canvas.width / 2, canvas.height / 2);
 
-      const frameBlob = await new Promise<Blob>((resolve) =>
-        canvas.toBlob((blob) => resolve(blob!), "image/png")
-      );
+        const frameBlob = await new Promise<Blob>((resolve) =>
+          canvas.toBlob((blob) => resolve(blob!), "image/png")
+        );
 
-      await ffmpeg.writeFile(`frame${frame.toString().padStart(4, "0")}.png`, await fetchFile(frameBlob));
+        await ffmpeg.writeFile(`frame${frame.toString().padStart(4, "0")}.png`, await fetchFile(frameBlob));
+      }
+
+      console.log("Writing audio file...");
+      await ffmpeg.writeFile("audio.mp3", await fetchFile(instrumentalFile));
+
+      console.log("Encoding video...");
+      await ffmpeg.exec([
+        "-framerate",
+        `${fps}`,
+        "-i",
+        "frame%04d.png", // Correct frame numbering format
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "output.mp4",
+      ]);
+
+      console.log("Merging audio...");
+      await ffmpeg.exec([
+        "-i",
+        "output.mp4",
+        "-i",
+        "audio.mp3",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "final.mp4",
+      ]);
+
+      console.log("Retrieving video...");
+      const data = await ffmpeg.readFile("final.mp4");
+      const url = URL.createObjectURL(new Blob([data], { type: "video/mp4" }));
+      setVideoUrl(url);
+      setLoading(false);
     }
-
-    console.log("Writing audio file...");
-    await ffmpeg.writeFile("audio.mp3", await fetchFile(instrumentalFile));
-
-    console.log("Encoding video...");
-    await ffmpeg.exec([
-      "-framerate",
-      `${fps}`,
-      "-i",
-      "frame%04d.png", // Correct frame numbering format
-      "-c:v",
-      "libx264",
-      "-pix_fmt",
-      "yuv420p",
-      "output.mp4",
-    ]);
-
-    console.log("Merging audio...");
-    await ffmpeg.exec([
-      "-i",
-      "output.mp4",
-      "-i",
-      "audio.mp3",
-      "-c:v",
-      "copy",
-      "-c:a",
-      "aac",
-      "final.mp4",
-    ]);
-
-    console.log("Retrieving video...");
-    const data = await ffmpeg.readFile("final.mp4");
-    const url = URL.createObjectURL(new Blob([data], { type: "video/mp4" }));
-    setVideoUrl(url);
-    setLoading(false);
+    catch (error) {
+      console.error("Error generating video:", error);
+      setLoading(false);
+    }
   };
 
   return (
     <div>
       <canvas ref={canvasRef} width={1280} height={720} hidden />
-      <Button onClick={generateVideo} disabled={loading || !isFFmpegReady} variant="outlined" color="primary"
+      {!videoUrl && <Button onClick={generateVideo} disabled={loading || !isFFmpegReady} variant="outlined" color="primary"
         sx={(theme) => ({
           color: theme.palette.text.primary,
           background: 'none',
@@ -133,6 +139,7 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
       >
         {loading ? <FontAwesomeIcon icon={faSpinner}/> : isFFmpegReady ? <FontAwesomeIcon icon={faDownload}/> : <FontAwesomeIcon icon={faSpinner}/>}
       </Button>
+      }
       {videoUrl && (
         <a href={videoUrl} download="lyrics_video.mp4">
           <button>Download MP4</button>
