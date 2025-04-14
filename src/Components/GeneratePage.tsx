@@ -141,8 +141,8 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
       } // Cleanup the listener on component unmount
     }
     catch (error) {
-      console.error("Error:", error);
-      setAlertMessage(error as string);
+      console.error("Error:", "backend is most likely not running at this time");
+      setAlertMessage("Error: " + "backend is most likely not running at this time");
       showAlert();
     }
 

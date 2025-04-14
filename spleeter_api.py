@@ -51,7 +51,7 @@ def get_lyrics(input_path):
     try:
         audio = whisper.load_audio(input_path)
 
-        result = whisper.transcribe(model, audio)
+        result = whisper.transcribe(model, audio, language='en')
         return result
     except Exception as e:
         print("Error during audio processing:", str(e))
