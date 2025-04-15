@@ -160,7 +160,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     }
 
     try{
-    const response = await fetch("https://7732-2607-fea8-54e4-ae00-a52a-ed61-1a1a-fcd2.ngrok-free", {
+    const response = await fetch("https://1bf9-2607-fea8-54e4-ae00-a52a-ed61-1a1a-fcd2.ngrok-free.app/separate", {
       method: "POST",
       body: formData,
     }).finally(() => setProcessing(false))

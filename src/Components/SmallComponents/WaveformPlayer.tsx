@@ -127,16 +127,26 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         const token = await auth.currentUser?.getIdToken();
         const headers = new Headers();
         headers.append("Authorization", `Bearer ${token}`);
+        headers.append("ngrok-skip-browser-warning", "true");
 
-        const vocalResponse = await fetch(vocalFile, { headers });
+        const vocalResponse = await fetch(vocalFile, {
+          method: 'GET',
+          headers: headers
+        }
+      
+      );
         console.log("Vocal response:", vocalResponse);
         const vocalBlob = await vocalResponse.blob();
         setVocalBlob(vocalBlob); //FOR STORING TO FIREBASE
         console.log("Vocal file size:", (vocalBlob.size / 1024 / 1024).toFixed(2), "MB");
+        console.log("Vocal blob:", vocalBlob);
         const vocalUrl = URL.createObjectURL(vocalBlob);
         setVocalBlobUrl(vocalUrl);
   
-        const instrumentalResponse = await fetch(instrumentalFile, { headers });
+        const instrumentalResponse = await fetch(instrumentalFile, {
+          method: 'GET',
+          headers: headers
+        });
         const instrumentalBlob = await instrumentalResponse.blob();
         setInstrumentalBlob(instrumentalBlob); //FOR STORING TO FIREBASE
         console.log("instrumental file size:", (instrumentalBlob.size / 1024 / 1024).toFixed(2), "MB");

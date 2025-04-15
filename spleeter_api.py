@@ -36,7 +36,15 @@ model = whisper.load_model("medium")
 
 output_vocal_file = 'converted_audio.wav'
 
-CORS(app)  # Enable CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",  # Or restrict to specific domains
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": True  # Important for authenticated requests
+    }
+})
 
 # Ensure folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -140,9 +148,20 @@ def separate_audio():
 
 @app.route("/download/<path:filename>", methods=["GET"])
 def download_file(filename):
+    # Check Authorization if needed
+    auth_header = request.headers.get('Authorization')
+    
+    # Here you would validate the token if needed
+    # For testing, you can just log it
+    print(f"Received auth header: {auth_header}")
+    
     file_path = os.path.join(OUTPUT_FOLDER, filename)
     if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
+        response = send_file(file_path, as_attachment=True)
+        # Add CORS headers directly to this response
+        response.headers['Access-Control-Allow-Origin'] = '*'  # Or your frontend URL
+        response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
+        return response
     return jsonify({"error": "File not found"}), 404
 
 if __name__ == "__main__":
