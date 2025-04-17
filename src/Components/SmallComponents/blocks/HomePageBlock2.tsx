@@ -7,11 +7,6 @@ export default function HomePageBlock2() {
 
   const items = [
     {
-      title: "Get The Exact Instrumentals",
-      description: "Generate karaoke of the song you love using the power of Deep Learning",
-      image: "instruments.svg"
-    },
-    {
       title: "Customizable",
       description: "edit the lyrics and titles of the songs you upload",
       image: "/customize.svg"
@@ -30,6 +25,13 @@ export default function HomePageBlock2() {
       title: "Record your own voice",
       description: "Record your own voice over the karaoke video and save it to your account",
       image: "recording-symbol.svg"
+    },
+    {
+      title: "Phone Friendly",
+      description: "The website is responsive and works on all devices, including phones and tablets",
+      image: "PhonePic.png",
+      scale: 1.2
+
     }
   ];
 
@@ -52,8 +54,51 @@ export default function HomePageBlock2() {
         width: '100%',
         height:'80%'
       }}>
+            <Box 
+      border={'2px solid'} 
+      borderColor={'primary.outlinedBorder'}
+      boxShadow={'md'}
+      borderRadius={'md'}
+      sx={{
+        width: { xs: '90%', sm: '400px' },
+        display: 'flex',
+        position: 'relative',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: 3,
+        textAlign: 'center'
+      }}
+    >
+      <Typography level="h2" sx={{ mb: 1 }}>Get The Exact Instruments</Typography>
+      <Typography sx={{ mb: 2 }}>Generate karaoke of the song you love using the power of Deep Learning</Typography>
+      <Box
+        sx={{
+          aspectRatio: '1/1',
+          height: { xs: '150px', sm: '200px' },
+          borderRadius: 'md',
+          overflow: 'hidden',
+        }}
+      >
+      </Box>
+        <div className='absolute top-0 left-0 w-[300px] h-[300px] z-10'>
+          <img 
+          src={mode==='light' ? '/waveformPicsLight.JPG' : '/waveformPicsDark.JPG'}  
+          style={
+            {
+              position: 'absolute', 
+              width: '300px', 
+              objectFit: 'contain', 
+              transform:'perspective(60px) rotate3D(0, 1, 0, 5deg)',
+              left: '20px', bottom: '0',
+              borderStyle: 'solid',
+              borderColor: mode === 'dark' ? '#FFFFFF' : '#000000',
+              borderWidth: '2px',
+            }} 
+          />
+        </div>
+    </Box>
         {items.map((item, index) => (
-          <CardItem key={index} title={item.title} description={item.description} image={item.image} />
+          <CardItem key={index} title={item.title} description={item.description} image={item.image} scale={item.scale} />
         ))}
       </Box>
     </Box>
@@ -64,9 +109,10 @@ interface CardItemProps {
   title: string;
   description: string;
   image: string;
+  scale?: number; // Optional scale prop for scaling the image
 }
 
-function CardItem({ title, description, image }: CardItemProps) {
+function CardItem({ title, description, image, scale }: CardItemProps) {
   const { mode } = useColorScheme();  // Get the current mode
 
   // Define stroke color based on mode
@@ -109,7 +155,7 @@ function CardItem({ title, description, image }: CardItemProps) {
             }}
           />
         ) : (
-          <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', }} />
+          <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', scale: scale ? scale: 1}} />
         )}
       </Box>
     </Box>

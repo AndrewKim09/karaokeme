@@ -29,7 +29,7 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
       if (!ffmpeg.loaded) {
         await ffmpeg.load();
         setIsFFmpegReady(true);
-        console.log("FFmpeg is loaded");
+        // console.log("FFmpeg is loaded");
       }
     };
     loadFFmpeg();

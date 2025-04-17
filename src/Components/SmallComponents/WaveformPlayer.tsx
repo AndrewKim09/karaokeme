@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
-import { Input, Modal, Option, Select, Typography } from "@mui/joy";
+import { CircularProgress, Input, Modal, Option, Select, Typography } from "@mui/joy";
 import { Button } from "@mui/joy";
 import {Box} from "@mui/joy";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -110,6 +110,9 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
 
   const user = useRef<string | null>(null);
 
+  const [vocalWaveFormLoaded, setVocalWaveFormLoaded] = useState(false);
+  const [instrumentalWaveFormLoaded, setInstrumentalWaveFormLoaded] = useState(false);
+
   useEffect(() => {
     const auth = getAuth();
     if (auth.currentUser) {
@@ -202,6 +205,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       vocalWaveSurfer.current.setVolume(0);
       setVocalVolume(.5);
       setDuration(vocalWaveSurfer.current?.getDuration());
+      setVocalWaveFormLoaded(true);
     })
 
     instrumentalWaveSurfer.current.on('ready', () => {
@@ -209,6 +213,8 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
       instrumentalWaveSurfer.current.setVolume(0);
       setInstrumentalVolume(0.5);
       setDuration(instrumentalWaveSurfer.current?.getDuration());
+
+      setInstrumentalWaveFormLoaded(true);
     })
 
     vocalWaveSurfer.current.on('audioprocess', () => {
@@ -421,7 +427,12 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
           justifySelf: 'center',
         })}
       >
-          <FontAwesomeIcon icon={playing ? faPause : faPlay} />
+          {
+          (vocalWaveFormLoaded && instrumentalWaveFormLoaded) ? 
+            <FontAwesomeIcon icon={playing ? faPause : faPlay} />
+            :
+            <CircularProgress/>
+          }
       </Button>
 
       {instrumentalFile && lyrics && instrumentalAudioRef.current && 
@@ -517,7 +528,7 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         </div>
       </div>
 
-      {<WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime} playing={playing}/>}
+      {(vocalWaveFormLoaded && instrumentalWaveFormLoaded) && <WaveformRecorder setTime={setTime} handlePlay={handlePlay} handlePause={handlePause} duration={duration} time={currentTime} playing={playing}/>}
 
       {vocalBlobUrl && <audio id='vocalAudio' ref={vocalAudioRef} src={vocalBlobUrl} controls style={{ display: 'none' }} />}
       {instrumentalBlobUrl && <audio id='instrumentalAudio' ref={instrumentalAudioRef} src={instrumentalBlobUrl} controls style={{ display: 'none' }} />}

@@ -20,3 +20,7 @@
   direction: rtl;
   height: 100%;
 }
+
+.leftImage{
+  transform: perspective(100px) rotate3D(0, 1, 0, 5deg);
+}

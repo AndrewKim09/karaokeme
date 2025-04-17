@@ -102,7 +102,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
     try{
       const karaokesRef = collection(db, 'SavedKaraokes')
       const auth = getAuth();
-      console.log("Current user:", getAuth().currentUser?.uid);
+      // console.log("Current user:", getAuth().currentUser?.uid);
       const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
         if (user) {
           const karaokesRef = collection(db, 'SavedKaraokes');
@@ -122,7 +122,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
               } as UploadKaraoke;
             });
     
-            console.log("Current user saved karaokes:", userSavedKaraokes.current);
+            // console.log("Current user saved karaokes:", userSavedKaraokes.current);
           });
     
           // Clean up on unmount or user sign-out
