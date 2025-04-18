@@ -82,7 +82,7 @@ export default function HomePageBlock2() {
       </Box>
         <div className='absolute top-0 left-0 w-[300px] h-[300px] z-10'>
           <img 
-          src={mode==='light' ? '/waveformPicsLight.JPG' : '/waveformPicsDark.JPG'}  
+          src={mode==='light' ? 'waveformPicsLight.JPG' : 'waveformPicsDark.JPG'}  
           style={
             {
               position: 'absolute', 

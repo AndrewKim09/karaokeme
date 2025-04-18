@@ -40,7 +40,7 @@ type Segment = {
 const isValidUrl = (url: string) => {
   try {
     new URL(url, window.location.origin); // Works if URL is valid
-    console.log("Valid URL");
+    // console.log("Valid URL");
     return true;
   } catch (e) {
     return false;
@@ -138,11 +138,11 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         }
       
       );
-        console.log("Vocal response:", vocalResponse);
+        // console.log("Vocal response:", vocalResponse);
         const vocalBlob = await vocalResponse.blob();
         setVocalBlob(vocalBlob); //FOR STORING TO FIREBASE
-        console.log("Vocal file size:", (vocalBlob.size / 1024 / 1024).toFixed(2), "MB");
-        console.log("Vocal blob:", vocalBlob);
+        // console.log("Vocal file size:", (vocalBlob.size / 1024 / 1024).toFixed(2), "MB");
+        // console.log("Vocal blob:", vocalBlob);
         const vocalUrl = URL.createObjectURL(vocalBlob);
         setVocalBlobUrl(vocalUrl);
   
@@ -152,10 +152,10 @@ const WaveformPlayer: React.FC<WaveformPlayerProps> = ({ vocalFile, instrumental
         });
         const instrumentalBlob = await instrumentalResponse.blob();
         setInstrumentalBlob(instrumentalBlob); //FOR STORING TO FIREBASE
-        console.log("instrumental file size:", (instrumentalBlob.size / 1024 / 1024).toFixed(2), "MB");
+        // console.log("instrumental file size:", (instrumentalBlob.size / 1024 / 1024).toFixed(2), "MB");
         const instrumentalUrl = URL.createObjectURL(instrumentalBlob);
         setInstrumentalBlobUrl(instrumentalUrl);
-        console.log("Audio data fetched successfully.");
+        // console.log("Audio data fetched successfully.");
         setAudioBlobsLoaded(true);
       }
       catch (error) {
