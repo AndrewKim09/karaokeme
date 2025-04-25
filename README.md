@@ -2,7 +2,7 @@
 
 This project uses React, typescript, and Python.
 I have hosted on aws at 
-https://us-east-1.console.aws.amazon.com/amplify/apps/d39gjbvu7ugqv4/overview
+https://master.d39gjbvu7ugqv4.amplifyapp.com/
 
 ## AVAILABLE TIMES
 
