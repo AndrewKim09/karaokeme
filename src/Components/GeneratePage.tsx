@@ -174,6 +174,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
   }
     catch (error) {
       console.error("Error uploading file:", error);
+      showAlert();
       setProcessing(false);
     }
   }
@@ -193,7 +194,6 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         return;
       }
       const vocalsRef = ref(storage, `${karaokeParams.title}/vocals.wav`)
-
       const instrumentalRef = ref(storage, `${karaokeParams.title}/accompaniment.wav`)
       
       if(ffmpegRef.current === null) { //lazy initialization of ffmpeg
@@ -202,29 +202,36 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         console.log("FFmpeg is loaded");
       }
 
-      (ffmpegRef.current as any).FS('writeFile', 'vocals.wav', await fetchFile(vocalBlob));
-      (ffmpegRef.current as any).FS('writeFile', 'accompaniment.wav', await fetchFile(instrumentalBlob));
+      try {
+        // Write input files to FFmpeg file system
+        await ffmpegRef.current.writeFile('vocals.wav', await fetchFile(vocalBlob));
+        await ffmpegRef.current.writeFile('accompaniment.wav', await fetchFile(instrumentalBlob));
 
-      const mp3VocalData = (ffmpegRef.current as any).FS('readFile', 'vocals.wav');
-      const mp3InstrumentalData = (ffmpegRef.current as any).FS('readFile', 'accompaniment.wav');
-      const mp3Blob = new Blob([mp3VocalData.buffer], { type: 'audio/mpeg' });
-      const mp3InstrumentalBlob = new Blob([mp3InstrumentalData.buffer], { type: 'audio/mpeg' });
-      
-      const dataToUpload: UploadKaraoke = {
-        title: karaokeParams.title,
-        lyrics: karaokeParams.lyrics,
-        date: karaokeParams.date,
-        user: karaokeParams.user,
-        instrumentalRef: instrumentalRef.fullPath,
-        vocalRef: vocalsRef.fullPath,
-        id: null as any, // Firestore will generate the ID
-      }
+        // Convert to MP3 (if needed)
+        await ffmpegRef.current.exec(['-i', 'vocals.wav', 'vocals.mp3']);
+        await ffmpegRef.current.exec(['-i', 'accompaniment.wav', 'accompaniment.mp3']);
 
-      console.log("Current user:", getAuth().currentUser?.uid);
-      console.log("Attempting to save data:", dataToUpload);
+        // Read the converted files
+        const mp3VocalData = await ffmpegRef.current.readFile('vocals.mp3');
+        const mp3InstrumentalData = await ffmpegRef.current.readFile('accompaniment.mp3');
+        
+        // Create blobs from the data
+        const mp3Blob = new Blob([mp3VocalData], { type: 'audio/mpeg' });
+        const mp3InstrumentalBlob = new Blob([mp3InstrumentalData], { type: 'audio/mpeg' });
+        
+        const dataToUpload: UploadKaraoke = {
+          title: karaokeParams.title,
+          lyrics: karaokeParams.lyrics,
+          date: karaokeParams.date,
+          user: karaokeParams.user,
+          instrumentalRef: instrumentalRef.fullPath,
+          vocalRef: vocalsRef.fullPath,
+          id: null as any, // Firestore will generate the ID
+        }
 
-      try{
-      
+        console.log("Current user:", getAuth().currentUser?.uid);
+        console.log("Attempting to save data:", dataToUpload);
+
         await Promise.all([
           uploadBytes(vocalsRef, mp3Blob).then(() => {
             console.log('Uploaded vocals to storage');
@@ -258,7 +265,6 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
         console.error("Error updating document: ", error);
       }
     }
-
   }
 
   const checkFileType = (file: File) => {
@@ -424,7 +430,7 @@ export const GeneratePage: React.FC<GeneratePageProps> = ({db, storage}) => {
             <div className='flex flex-col items-center justify-center gap-2'>
               <CircularProgress sx={{marginRight: '20px'}}/> <Typography> Generating Track </Typography>
               <Typography level='body-xs'>
-                it can take around a minute for a 6mb file
+                it can take around 1 to 2 minutes.
               </Typography>
               <Typography level='body-xs' flexWrap={'wrap'} textAlign={'center'}>
                 audio that isnt clear will be separated properly but will not have correct lyrics
